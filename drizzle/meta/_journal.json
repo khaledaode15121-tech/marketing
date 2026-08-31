@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1782205688719,
+      "tag": "0000_woozy_liz_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1782205725560,
+      "tag": "0001_complete_prowler",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786898627597,
+      "tag": "0002_sharp_skin",
+      "breakpoints": true
+    }
+  ]
+}
