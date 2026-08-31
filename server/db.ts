@@ -1678,13 +1678,29 @@ export async function markReviewAsHelpful(reviewId: number) {
 export async function getCategories() {
   const db = await getDb();
   if (!db) return [];
-
   const result = await db
     .select({ name: categoryTable.name })
     .from(categoryTable)
     .where(eq(categoryTable.isActive, true));
   return result.map(r => r.name).filter(Boolean);
 }
+
+export async function getActiveCategoriesWithImages() {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: categoryTable.id,
+      name: categoryTable.name,
+      slug: categoryTable.slug,
+      description: categoryTable.description,
+      image: categoryTable.image,
+    })
+    .from(categoryTable)
+    .where(eq(categoryTable.isActive, true))
+    .orderBy(desc(categoryTable.id));
+}
+
 
 export async function getAllCategories() {
   const db = await getDb();

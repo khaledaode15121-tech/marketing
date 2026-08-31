@@ -192,6 +192,9 @@ export const appRouter = router({
       )
       .query(({ input }) => db.searchProducts(input)),
     categories: publicProcedure.query(() => db.getCategories()),
+    categoriesWithImages: publicProcedure.query(() =>
+      db.getActiveCategoriesWithImages()
+    ),
     brands: publicProcedure.query(() => db.getBrands()),
     sections: publicProcedure.query(() => db.getBrandSectionsWithCategories()),
     colors: publicProcedure.query(() => db.getProductColors()),

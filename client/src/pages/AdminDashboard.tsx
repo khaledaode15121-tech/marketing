@@ -1127,7 +1127,7 @@ function AdminDashboardContent({ user }: { user: AdminDashboardUser }) {
               {isAdmin ? "لوحة المدير العام" : "لوحة مدير القسم"}
             </h1>
             <p className="text-gray-500 mt-1 text-sm">
-              مرحباً {user?.name}، {isAdmin ? "إدارة متجر أبو علي للاتصالات" : "متابعة الأقسام المخصصة لك فقط"}
+              مرحباً {user?.name}، {isAdmin ? "إدارة متجر AliGo" : "متابعة الأقسام المخصصة لك فقط"}
             </p>
           </div>
           <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${roleMeta.badgeClass}`}>

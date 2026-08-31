@@ -1,5 +1,5 @@
 /**
- * أبو علي للاتصالات — Landing Page
+ * AliGo — Landing Page
  * Design: Bold Electric Blue
  * Primary: #0057FF | Accent: #FF6B00 | BG: #F4F6FA | Text: #0D1B2A
  * Fonts: Cairo (headings) + Tajawal (body) + Space Grotesk (numbers)
@@ -158,8 +158,7 @@ import {
 // ─── Image URLs ───────────────────────────────────────────────────────────────
 const HERO_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663786811951/JRcgdRnyZJ9kJAosaM5xmy/hero-phones-SGaT8CjQ2U74WdzKsdc8JZ.webp";
-const LOGO_IMG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663786811951/JRcgdRnyZJ9kJAosaM5xmy/logo-icon-25Ymxw43M7XJ4ot9A6W2DR.webp";
+const LOGO_IMG = "/images/aligo.svg";
 const PRODUCTS_IMG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663786811951/JRcgdRnyZJ9kJAosaM5xmy/products-banner-Ah5DDtn8483e8hcfHe7qZB.webp";
 const OFFER_BG =
@@ -237,6 +236,75 @@ const paymentMethods = [
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
+function BrandLogo({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="flex items-center gap-3 md:gap-4">
+      <svg
+        viewBox="0 0 160 90"
+        className={[
+          "shrink-0 drop-shadow-[0_10px_22px_rgba(37,99,235,0.22)]",
+          compact ? "h-12 w-12" : "h-14 w-14 md:h-16 md:w-16",
+        ].join(" ")}
+        aria-label="AliGo logo"
+        role="img"
+      >
+        <defs>
+          <linearGradient id="logo-blue" x1="0%" x2="100%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#0f172a" />
+            <stop offset="25%" stopColor="#1d4ed8" />
+            <stop offset="75%" stopColor="#2563eb" />
+            <stop offset="100%" stopColor="#fbbf24" />
+          </linearGradient>
+          <linearGradient id="logo-gold" x1="0%" x2="100%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#facc15" />
+          </linearGradient>
+        </defs>
+        <circle cx="42" cy="42" r="34" fill="url(#logo-blue)" />
+        <path d="M21 62 L42 19 L63 62 H53 L48 50 H36 L31 62 Z" fill="#ffffff" />
+        <path d="M36 42 H48 L42 29 Z" fill="url(#logo-gold)" />
+        <circle cx="58" cy="58" r="8" fill="#fbbf24" opacity="0.96" />
+        <path d="M56 54 L62 58 L56 62 Z" fill="#ffffff" />
+      </svg>
+
+      <div className="leading-none">
+        <div
+          className={[
+            "font-black tracking-[-0.08em]",
+            compact ? "text-lg" : "text-[1.3rem] md:text-[1.75rem]",
+          ].join(" ")}
+          style={{
+            fontFamily: "'Cairo', sans-serif",
+            backgroundImage: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 35%, #fbbf24 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+            textShadow: "0 10px 18px rgba(37, 99, 235, 0.18)",
+          }}
+        >
+          AliGo
+        </div>
+        <div
+          className={[
+            "mt-1 font-bold tracking-[0.08em]",
+            compact ? "text-[8px]" : "text-[9px] md:text-[11px]",
+          ].join(" ")}
+          style={{
+            fontFamily: "'Cairo', sans-serif",
+            backgroundImage: "linear-gradient(135deg, #f59e0b 0%, #f9c74f 35%, #2563eb 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+            letterSpacing: "0.08em",
+          }}
+        >
+          وجهتك الأولى
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Navbar({
   selectedCategory,
   onCategoryChange,
@@ -292,275 +360,470 @@ function Navbar({
   };
 
   return (
-    <header
-      className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${"bg-background/95 backdrop-blur-xl shadow-lg shadow-blue-900/5"}`}
-    >
-      <div className="hidden bg-blue-600 text-white md:block">
-        <div
-          className="container flex items-center justify-between py-2 text-xs"
-          style={{ fontFamily: "'Cairo', sans-serif" }}
-        >
-          <span>متجر أبو علي للاتصالات — تسوق بثقة</span>
-          <div className="flex items-center gap-5">
-            <span>واتساب: 050 000 0000</span>
-            <span>الدعم متاح يومياً</span>
+    <header className="fixed top-0 right-0 left-0 z-50 px-3 pt-3 md:px-4 transition-all duration-300">
+      <div className="mx-auto max-w-[1500px] overflow-hidden rounded-[26px] border border-white/70 bg-white/85 shadow-[0_20px_50px_rgba(37,99,235,0.12)] backdrop-blur-xl">
+        <div className="hidden bg-gradient-to-r from-[#0f172a] via-[#1d4ed8] to-[#fbbf24] text-white md:block">
+          <div
+            className="mx-auto flex max-w-[1500px] items-center justify-between px-5 py-2 text-[11px] font-medium"
+            style={{ fontFamily: "'Cairo', sans-serif" }}
+          >
+            <span>متجر AliGo — تسوق بثقة</span>
+            <div className="flex items-center gap-5 text-white/90">
+              <span>واتساب: 050 000 0000</span>
+              <span>الدعم متاح يومياً</span>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="container">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <a href="#hero" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center shadow-md group-hover:shadow-blue-500/30 transition-shadow">
-              <img
-                src={LOGO_IMG}
-                alt="أبو علي للاتصالات"
-                className="w-8 h-8 object-contain"
-              />
-            </div>
-            <div className="leading-tight">
-              <div
-                className={`font-bold text-base md:text-lg leading-none font-cairo transition-colors ${"text-gray-900"}`}
-                style={{ fontFamily: "'Cairo', sans-serif" }}
-              >
-                أبو علي للاتصالات
-              </div>
-              <div className={`text-xs transition-colors ${"text-blue-600"}`}>
-                وجهتك الأولى للتقنية
-              </div>
-            </div>
-          </a>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map(link =>
-              link.isOfferLink ? (
-                <button
-                  key={link.href}
-                  type="button"
-                  onClick={() => {
-                    onCategoryChange("العروض");
-                    document
-                      .getElementById("products")
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-blue-600/10 hover:text-blue-600 ${"text-gray-700 hover:text-blue-600"}`}
-                  style={{ fontFamily: "'Cairo', sans-serif" }}
-                >
-                  {link.label}
-                </button>
-              ) : (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-blue-600/10 hover:text-blue-600 ${"text-gray-700 hover:text-blue-600"}`}
-                  style={{ fontFamily: "'Cairo', sans-serif" }}
-                >
-                  {link.label}
-                </a>
-              )
-            )}
-          </nav>
-
-          {/* CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            <a
-              href="tel:+966500000000"
-              className={`flex items-center gap-2 text-sm font-medium transition-colors ${"text-gray-700 hover:text-blue-600"}`}
-            >
-              <Phone className="w-4 h-4" />
-              <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                +966 50 000 0000
-              </span>
+        <div className="mx-auto max-w-[1500px] px-4 md:px-6">
+          <div className="flex h-16 items-center justify-between md:h-20">
+            <a href="#hero" className="group flex items-center">
+              <BrandLogo compact={false} />
             </a>
-            {user ? (
-              <div className="flex items-center gap-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all focus:outline-none ${"bg-blue-50 text-blue-700 hover:bg-blue-100"}`}
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      <User className="w-4 h-4" />
-                      أهلاً وسهلاً، {user.name || "عميل"}
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel className="text-right">
-                      {user.name ? `مرحباً ${user.name}` : "مرحباً بك"}
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onSelect={() => navigate("/cart")}
-                      className="text-right"
-                    >
-                      <ShoppingCart className="w-4 h-4 ml-2" />
-                      السلة
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => navigate("/orders")}
-                      className="text-right"
-                    >
-                      <History className="w-4 h-4 ml-2" />
-                      الطلبات السابقة
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={handleLogout}
-                      className="text-right text-destructive"
-                    >
-                      <LogOut className="w-4 h-4 ml-2" />
-                      تسجيل الخروج
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => {
-                    if (!loading) window.location.href = getLoginUrl();
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:shadow-blue-500/40 active:scale-95"
-                  style={{ fontFamily: "'Cairo', sans-serif" }}
-                  disabled={loading}
-                >
-                  {loading ? "جارٍ التحقق..." : "تسجيل الدخول"}
-                </Button>
-                <Button
-                  onClick={handleShoppingCart}
-                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2 rounded-xl shadow-lg shadow-orange-500/25 transition-all hover:shadow-orange-500/40 active:scale-95"
-                  style={{ fontFamily: "'Cairo', sans-serif" }}
-                >
-                  <ShoppingCart className="w-4 h-4 ml-2" />
-                  السلة
-                </Button>
-              </div>
-            )}
-          </div>
 
-          {/* Mobile Menu Toggle */}
-          <div className="flex items-center gap-2 md:hidden">
-            <button
-              className={`p-2 rounded-lg transition-colors ${"text-gray-700 hover:bg-gray-100"}`}
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="فتح القائمة"
-            >
-              {menuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
+            <nav className="hidden items-center gap-2 md:flex">
+              {navLinks.map(link =>
+                link.isOfferLink ? (
+                  <button
+                    key={link.href}
+                    type="button"
+                    onClick={() => {
+                      onCategoryChange("العروض");
+                      document
+                        .getElementById("products")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="rounded-full border border-transparent bg-transparent px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:border-blue-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-yellow-50 hover:text-blue-700"
+                    style={{ fontFamily: "'Cairo', sans-serif" }}
+                  >
+                    {link.label}
+                  </button>
+                ) : (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="rounded-full px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-yellow-50 hover:text-blue-700"
+                    style={{ fontFamily: "'Cairo', sans-serif" }}
+                  >
+                    {link.label}
+                  </a>
+                )
               )}
-            </button>
-          </div>
-        </div>
-      </div>
+            </nav>
 
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 shadow-xl">
-          <div className="container py-4 flex flex-col gap-1">
-            {navLinks.map(link => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="px-4 py-3 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 font-medium transition-colors"
-                style={{ fontFamily: "'Cairo', sans-serif" }}
-              >
-                {link.label}
-              </a>
-            ))}
-            <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
+            <div className="hidden items-center gap-3 md:flex">
               <a
                 href="tel:+966500000000"
-                className="flex items-center gap-2 px-4 py-3 text-gray-600"
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-blue-200 hover:text-blue-700"
               >
-                <Phone className="w-4 h-4 text-blue-600" />
+                <Phone className="h-4 w-4 text-blue-600" />
                 <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                   +966 50 000 0000
                 </span>
               </a>
+
               {user ? (
-                <>
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-blue-50 text-blue-700">
-                    <User className="w-4 h-4" />
-                    <span
-                      className="text-sm font-medium"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      أهلاً وسهلاً، {user.name || "عميل"}
-                    </span>
-                  </div>
-                  <Button
-                    onClick={() => {
-                      handleShoppingCart();
-                      setMenuOpen(false);
-                    }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold w-full rounded-xl"
-                    style={{ fontFamily: "'Cairo', sans-serif" }}
-                  >
-                    <ShoppingCart className="w-4 h-4 ml-2" />
-                    السلة
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      navigate("/orders");
-                      setMenuOpen(false);
-                    }}
-                    variant="outline"
-                    className="w-full text-sm font-medium rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50"
-                    style={{ fontFamily: "'Cairo', sans-serif" }}
-                  >
-                    <History className="w-4 h-4 ml-1" />
-                    الطلبات السابقة
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      handleLogout();
-                      setMenuOpen(false);
-                    }}
-                    variant="outline"
-                    className="w-full text-sm font-medium rounded-lg border-gray-300 hover:bg-gray-100"
-                    style={{ fontFamily: "'Cairo', sans-serif" }}
-                  >
-                    <LogOut className="w-4 h-4 ml-1" />
-                    خروج
-                  </Button>
-                </>
+                <div className="flex items-center gap-3">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="flex items-center gap-2 rounded-full border border-blue-100 bg-gradient-to-r from-blue-50 to-yellow-50 px-4 py-2.5 text-sm font-semibold text-blue-700 transition-all hover:shadow-[0_10px_30px_rgba(37,99,235,0.12)] focus:outline-none"
+                        style={{ fontFamily: "'Cairo', sans-serif" }}
+                      >
+                        <User className="h-4 w-4" />
+                        أهلاً وسهلاً، {user.name || "عميل"}
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel className="text-right">
+                        {user.name ? `مرحباً ${user.name}` : "مرحباً بك"}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() => navigate("/cart")}
+                        className="text-right"
+                      >
+                        <ShoppingCart className="ml-2 h-4 w-4" />
+                        السلة
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => navigate("/orders")}
+                        className="text-right"
+                      >
+                        <History className="ml-2 h-4 w-4" />
+                        الطلبات السابقة
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={handleLogout}
+                        className="text-right text-destructive"
+                      >
+                        <LogOut className="ml-2 h-4 w-4" />
+                        تسجيل الخروج
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ) : (
-                <>
+                <div className="flex items-center gap-2">
                   <Button
                     onClick={() => {
-                      if (!loading) {
-                        window.location.href = getLoginUrl();
-                      }
-                      setMenuOpen(false);
+                      if (!loading) window.location.href = getLoginUrl();
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold w-full rounded-xl"
+                    className="rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-2.5 font-bold text-white shadow-[0_14px_30px_rgba(37,99,235,0.24)] transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-[0_16px_30px_rgba(37,99,235,0.3)] active:scale-[0.98]"
                     style={{ fontFamily: "'Cairo', sans-serif" }}
                     disabled={loading}
                   >
                     {loading ? "جارٍ التحقق..." : "تسجيل الدخول"}
                   </Button>
                   <Button
-                    onClick={() => {
-                      handleShoppingCart();
-                      setMenuOpen(false);
-                    }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold w-full rounded-xl"
+                    onClick={handleShoppingCart}
+                    className="rounded-full bg-gradient-to-r from-[#f59e0b] to-[#fbbf24] px-5 py-2.5 font-bold text-slate-900 shadow-[0_14px_30px_rgba(245,158,11,0.28)] transition-all hover:from-[#fbbf24] hover:to-[#facc15] active:scale-[0.98]"
                     style={{ fontFamily: "'Cairo', sans-serif" }}
                   >
-                    <ShoppingCart className="w-4 h-4 ml-2" />
+                    <ShoppingCart className="ml-2 h-4 w-4" />
                     السلة
                   </Button>
-                </>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 md:hidden">
+              <button
+                className="rounded-full border border-slate-200 bg-slate-50 p-2.5 text-slate-700 transition-colors hover:bg-slate-100"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="فتح القائمة"
+              >
+                {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {menuOpen && (
+          <div className="border-t border-slate-100 bg-white/95 md:hidden">
+            <div className="container flex flex-col gap-1 py-4">
+              {navLinks.map(link => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3 font-medium text-slate-700 transition-colors hover:bg-gradient-to-r hover:from-blue-50 hover:to-yellow-50 hover:text-blue-700"
+                  style={{ fontFamily: "'Cairo', sans-serif" }}
+                >
+                  {link.label}
+                </a>
+              ))}
+              <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
+                <a
+                  href="tel:+966500000000"
+                  className="flex items-center gap-2 rounded-xl px-4 py-3 text-slate-600"
+                >
+                  <Phone className="h-4 w-4 text-blue-600" />
+                  <span style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    +966 50 000 0000
+                  </span>
+                </a>
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-50 to-yellow-50 px-4 py-3 text-blue-700">
+                      <User className="h-4 w-4" />
+                      <span className="text-sm font-medium" style={{ fontFamily: "'Cairo', sans-serif" }}>
+                        أهلاً وسهلاً، {user.name || "عميل"}
+                      </span>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        handleShoppingCart();
+                        setMenuOpen(false);
+                      }}
+                      className="w-full rounded-xl bg-gradient-to-r from-[#f59e0b] to-[#fbbf24] font-bold text-slate-900"
+                      style={{ fontFamily: "'Cairo', sans-serif" }}
+                    >
+                      <ShoppingCart className="ml-2 h-4 w-4" />
+                      السلة
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        navigate("/orders");
+                        setMenuOpen(false);
+                      }}
+                      variant="outline"
+                      className="w-full rounded-xl border-blue-200 text-blue-700 hover:bg-blue-50"
+                      style={{ fontFamily: "'Cairo', sans-serif" }}
+                    >
+                      <History className="ml-1 h-4 w-4" />
+                      الطلبات السابقة
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        handleLogout();
+                        setMenuOpen(false);
+                      }}
+                      variant="outline"
+                      className="w-full rounded-xl border-slate-300 hover:bg-slate-100"
+                      style={{ fontFamily: "'Cairo', sans-serif" }}
+                    >
+                      <LogOut className="ml-1 h-4 w-4" />
+                      خروج
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={() => {
+                        if (!loading) {
+                          window.location.href = getLoginUrl();
+                        }
+                        setMenuOpen(false);
+                      }}
+                      className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 font-bold text-white"
+                      style={{ fontFamily: "'Cairo', sans-serif" }}
+                      disabled={loading}
+                    >
+                      {loading ? "جارٍ التحقق..." : "تسجيل الدخول"}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        handleShoppingCart();
+                        setMenuOpen(false);
+                      }}
+                      className="w-full rounded-xl bg-gradient-to-r from-[#f59e0b] to-[#fbbf24] font-bold text-slate-900"
+                      style={{ fontFamily: "'Cairo', sans-serif" }}
+                    >
+                      <ShoppingCart className="ml-2 h-4 w-4" />
+                      السلة
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}
+
+function CategoryCarousel({
+  onCategoryChange,
+  saleProducts,
+  onShowProduct,
+}: {
+  onCategoryChange: (value: string | undefined) => void;
+  saleProducts: any[];
+  onShowProduct: (id: number) => void;
+}) {
+  const { data: categories = [] } =
+    trpc.products.categoriesWithImages.useQuery();
+  const { data: products = [] } = trpc.products.list.useQuery();
+  const [activeOfferIndex, setActiveOfferIndex] = useState(0);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const [imageBg, setImageBg] = useState<string | null>(null);
+
+  const categoryCards = useMemo(() => {
+    return categories
+      .map(category => {
+        const fallbackProduct = products.find(
+          product => product.category?.trim() === category.name?.trim()
+        );
+        return {
+          ...category,
+          image:
+            category.image ||
+            (fallbackProduct ? getProductImages(fallbackProduct)[0] : undefined),
+        };
+      })
+      .filter(category => category.image);
+  }, [categories, products]);
+
+  const featuredProduct =
+    saleProducts[activeOfferIndex] ?? saleProducts[0] ?? null;
+  const offerImage = featuredProduct
+    ? getProductImages(featuredProduct)[0]
+    : undefined;
+  const offerDescription =
+    featuredProduct?.description?.trim() ||
+    "استفد من عروضنا المختارة على أحدث المنتجات مع جودة مضمونة وتوصيل سريع.";
+  const offerPrice =
+    featuredProduct?.price != null
+      ? formatSypWithCurrency(featuredProduct.price)
+      : "عرض خاص";
+  const offerOldPrice =
+    featuredProduct?.oldPrice != null
+      ? formatSypWithCurrency(featuredProduct.oldPrice)
+      : null;
+
+  useEffect(() => {
+    if (saleProducts.length <= 1) return;
+    setActiveOfferIndex(index => index % saleProducts.length);
+    const timer = window.setInterval(() => {
+      setActiveOfferIndex(index => (index + 1) % saleProducts.length);
+    }, 6500);
+    return () => window.clearInterval(timer);
+  }, [saleProducts.length]);
+
+  const selectCategory = (category?: string) => {
+    onCategoryChange(category);
+    document.getElementById("products")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const randomMotion = (index: number) => ({
+    top: `${8 + ((index * 29) % 76)}%`,
+    left: `${7 + ((index * 41) % 78)}%`,
+    animationDelay: `${(index * 0.73) % 4}s`,
+    animationDuration: `${10 + (index % 7) * 1.2}s`,
+  });
+
+  const handleOfferImageLoad = (event: any) => {
+    try {
+      const img = event.currentTarget as HTMLImageElement;
+      imageRef.current = img;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const w = 40;
+      const h = 40;
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(img, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h).data;
+      let r = 0,
+        g = 0,
+        b = 0,
+        count = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        r += data[i];
+        g += data[i + 1];
+        b += data[i + 2];
+        count++;
+      }
+      if (count > 0) {
+        r = Math.round(r / count);
+        g = Math.round(g / count);
+        b = Math.round(b / count);
+        setImageBg(`rgba(${r}, ${g}, ${b}, 0.14)`);
+      }
+    } catch (err) {
+      setImageBg(null);
+    }
+  };
+
+  return (
+    <section
+      aria-labelledby="homepage-featured-heading"
+      className="relative overflow-hidden rounded-[28px] bg-[#3B0764] shadow-[0_25px_80px_rgba(46,8,84,0.3)]"
+      dir="rtl"
+    >
+      <div className="grid items-stretch md:grid-cols-[28%_1px_44%_1px_28%]">
+        {/* Left: purple description column (moved to left) */}
+        <div className="relative min-h-[390px] overflow-hidden bg-[#3B0764] p-5 md:min-h-[450px] md:p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.12),transparent_28%),radial-gradient(circle_at_85%_80%,rgba(46,8,84,0.8),transparent_30%)]" />
+          <div className="relative z-10 flex flex-col items-start justify-between gap-4">
+            <div>
+              <p className="mb-1 text-sm font-bold text-fuchsia-100" style={{ fontFamily: "'Cairo', sans-serif" }}>عروض مختارة لك</p>
+              <h1 id="homepage-featured-heading" className="max-w-[520px] text-2xl font-black leading-tight text-white md:text-4xl" style={{ fontFamily: "'Cairo', sans-serif" }}>{featuredProduct?.name || "اكتشف عروضنا المميزة"}</h1>
+            </div>
+            {saleProducts.length > 1 && (
+              <div className="flex shrink-0 gap-1.5 pt-2" aria-label="التنقل بين العروض">
+                {saleProducts.slice(0, 5).map((product, index) => (
+                  <button key={product.id} type="button" aria-label={`العرض ${index + 1}`} onClick={() => setActiveOfferIndex(index)} className={`h-2.5 w-2.5 rounded-full transition ${index === activeOfferIndex ? "bg-orange-500" : "bg-white/80 hover:bg-blue-500"}`} />
+                ))}
+              </div>
+            )}
+
+            <div className="mt-3 text-right">
+              <p className="max-w-xl text-base leading-8 text-white/80 md:text-lg" style={{ fontFamily: "'Tajawal', sans-serif" }}>{offerDescription}</p>
+              <div className="mt-5 flex flex-wrap items-end gap-3">
+                <span className="text-2xl font-black text-white md:text-3xl" style={{ fontFamily: "'Cairo', sans-serif" }}>{offerPrice}</span>
+                {offerOldPrice && (<span className="pb-1 text-sm text-white/55 line-through" style={{ fontFamily: "'Cairo', sans-serif" }}>{offerOldPrice}</span>)}
+              </div>
+              <button type="button" onClick={() => featuredProduct && onShowProduct(featuredProduct.id)} disabled={!featuredProduct} className="mt-6 inline-flex items-center gap-2 rounded-[18px] bg-orange-500 px-7 py-3 text-base font-black text-white shadow-lg shadow-orange-500/30 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60" style={{ fontFamily: "'Cairo', sans-serif" }}>تسوق الآن <ArrowLeft className="h-5 w-5" /></button>
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden md:block h-full" style={{ background: imageBg ?? 'rgba(255,255,255,0.08)' }} />
+
+        {/* Center: large product image with adaptive background */}
+        <div className="flex items-center justify-center min-h-[390px] p-5 md:min-h-[450px] md:p-8">
+          <div className="relative w-full max-w-[760px] rounded-[26px] overflow-hidden flex items-center justify-center" style={{background: imageBg ?? "transparent"}}>
+            {/* blurred backdrop using the product image */}
+            {offerImage && (
+              <div className="absolute inset-0 bg-center bg-cover filter blur-2xl opacity-30" style={{ backgroundImage: `url(${offerImage})` }} />
+            )}
+            <div className="relative z-10 flex items-center justify-center p-6">
+              {offerImage ? (
+                <img key={offerImage} src={offerImage} alt={featuredProduct?.name || "منتج عليه عرض"} onLoad={handleOfferImageLoad} className="max-h-[520px] w-auto object-contain transition duration-700" />
+              ) : (
+                <div className="text-center text-sm font-bold text-slate-500">لا توجد عروض متاحة حاليًا</div>
               )}
             </div>
           </div>
         </div>
-      )}
-    </header>
+
+        <div className="hidden md:block h-full" style={{ background: imageBg ?? 'rgba(255,255,255,0.08)' }} />
+
+        {/* Right: category floats (moved to right) */}
+        <div className="relative min-h-[390px] overflow-hidden p-5 md:min-h-[450px] md:p-7">
+          <div className="pointer-events-none absolute inset-0 opacity-70">
+            <div className="absolute -right-16 top-8 h-40 w-40 rounded-full border border-[#2E0854]/80" />
+            <div className="absolute bottom-[-45px] left-12 h-44 w-44 rotate-45 border border-[#2E0854]/70" />
+            <div className="absolute left-1/3 top-1/3 h-16 w-16 rounded-full border border-[#2E0854]/70" />
+          </div>
+          <div className="relative z-10">
+            <p className="mb-1 text-sm font-bold text-fuchsia-100" style={{ fontFamily: "'Cairo', sans-serif" }}>تصفح مجموعاتنا</p>
+            <h2 className="text-2xl font-black text-white md:text-3xl" style={{ fontFamily: "'Cairo', sans-serif" }}>كل الفئات في مكان واحد</h2>
+          </div>
+          {categoryCards.length > 0 ? (
+            <div className="absolute inset-0" aria-label="صور الفئات">
+              {categoryCards.map((category, index) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => selectCategory(category.name)}
+                  style={randomMotion(index)}
+                  className="category-float group absolute h-16 w-16 overflow-hidden rounded-2xl border-2 border-white/90 bg-white p-0.5 shadow-xl shadow-black/25 transition duration-300 hover:z-20 hover:scale-125 hover:border-fuchsia-200 hover:shadow-[0_0_0_4px_rgba(232,121,249,0.25),0_18px_35px_rgba(0,0,0,0.35)] focus-visible:z-20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-300/70 sm:h-20 sm:w-20"
+                  aria-label={`عرض فئة ${category.name}`}
+                >
+                  <img src={category.image || ""} alt={category.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />
+                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-fuchsia-500/35 via-transparent to-white/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-[#2E0854]/90 px-1 py-1 text-[9px] font-bold text-white transition duration-300 group-hover:bg-[#2E0854] group-hover:py-2 group-hover:text-[10px]">{category.name}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="relative z-10 mt-8 rounded-2xl border border-[#2E0854] bg-[#2E0854]/70 p-4 text-sm leading-7 text-white/80">ستظهر صور الفئات هنا بعد إضافة صورها من لوحة الإدارة.</div>
+          )}
+          <button type="button" onClick={() => selectCategory(undefined)} className="absolute bottom-5 left-5 z-20 inline-flex items-center gap-2 rounded-full border border-[#2E0854] bg-[#2E0854] px-4 py-2 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-[#2E0854]/80" style={{ fontFamily: "'Cairo', sans-serif" }}>
+            <ArrowLeft className="h-4 w-4" />
+            عرض كل الفئات
+          </button>
+        </div>
+      </div>
+      <style>{`
+        .category-float {
+          animation: category-float 12s ease-in-out infinite alternate;
+          will-change: transform;
+        }
+        .category-float:hover,
+        .category-float:focus-visible {
+          animation-play-state: paused;
+          transform: translate3d(0, -6px, 0) scale(1.2) rotate(0deg);
+        }
+        @keyframes category-float {
+          0% { transform: translate3d(-8px, 5px, 0) rotate(-3deg); }
+          50% { transform: translate3d(10px, -12px, 0) rotate(4deg); }
+          100% { transform: translate3d(-5px, 9px, 0) rotate(-2deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .category-float { animation: none; }
+        }
+      `}</style>
+    </section>
   );
 }
 
@@ -708,9 +971,9 @@ function CatalogHero({
   };
 
   return (
-    <section id="hero" className="bg-background pb-10 pt-24 md:pt-28">
+    <section id="hero" className="bg-[#3B0764] pb-10 pt-24 md:pt-28">
       <div className="container">
-        <div className="relative z-20 mb-4 flex flex-wrap items-center justify-start gap-2 overflow-visible rounded-[18px] border border-slate-200 bg-background/90 px-2 py-2 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+        <div className="relative z-20 -mt-12 mb-4 flex flex-wrap items-center justify-center gap-2 overflow-visible rounded-full border border-slate-200 bg-white px-3 py-2 shadow-md mx-auto max-w-[880px]">
           {topBrands.map(brand => {
             const brandCategories = brandCategoryMap.get(brand) ?? [];
             const isActive = activeBrand === brand;
@@ -731,8 +994,8 @@ function CatalogHero({
                       current === brand ? null : brand
                     )
                   }
-                  className={`flex min-w-[120px] items-center justify-between gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${selectedCategory === brand ? "border-[#f97316] bg-[#fff7ed] text-[#f97316]" : "border-[#cbd5e1] bg-[#ffffff] text-[#1f2937] hover:border-[#93c5fd] hover:bg-[#f8fbff]"}`}
-                  style={{ fontFamily: "'Cairo', sans-serif" }}
+                  className={`flex min-w-[120px] items-center justify-between gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${selectedCategory === brand ? "border-[#f97316] bg-[#f97316]/10 text-[#f97316]" : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-300"}`}
+                  style={{ fontFamily: "'Cairo', sans-serif", color: selectedCategory === brand ? '#f97316' : '#0f172a' }}
                 >
                   <span>{brand}</span>
                   <ChevronDown
@@ -779,141 +1042,11 @@ function CatalogHero({
           })}
         </div>
 
-        <div className="relative overflow-hidden rounded-[28px] border-0 bg-gradient-to-br from-[#bfdbfe] via-[#dbeafe] to-[#93c5fd] shadow-[0_25px_80px_rgba(30,64,175,0.16)]">
-          <div dir="rtl" className="grid md:grid-cols-[35%_65%]">
-            <div className="relative min-h-[300px] overflow-hidden md:min-h-[420px]">
-              <img
-                src={heroImage}
-                alt={featuredProduct?.name || "عروض خاصة"}
-                className="absolute inset-0 h-full w-full object-cover transition-all duration-[1400ms] ease-in-out"
-              />
-              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#dbeafe]/10 to-[#93c5fd]/20" />
-            </div>
-
-            <div className="relative z-10 px-4 py-5 md:px-8 md:py-8">
-              {/* <div className="mb-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSearchOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm transition hover:bg-white/20"
-                style={{ fontFamily: "'Cairo', sans-serif" }}
-              >
-                <Search className="h-4 w-4" />
-                بحث سريع
-              </button>
-            </div> */}
-
-              <div
-                dir="rtl"
-                className="grid w-full gap-6 md:min-h-[420px] md:grid-cols-2 md:items-end"
-              >
-                <div className="rounded-[22px] bg-[#dbeafe] p-5 text-right md:p-6">
-                  <div className="flex items-center justify-between gap-4 py-2">
-                    <span
-                      className="text-sm font-medium text-slate-600"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      الأقسام
-                    </span>
-                    <span
-                      className="rounded-full bg-blue-600 px-3 py-1 text-sm font-bold text-white"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      {heroBrand}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4 py-2">
-                    <span
-                      className="text-sm font-medium text-slate-600"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      الفئة
-                    </span>
-                    <span
-                      className="text-lg font-bold text-slate-900"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      {heroCategory}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4 py-2">
-                    <span
-                      className="text-sm font-medium text-slate-600"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      اسم المنتج
-                    </span>
-                    <h2
-                      className="text-lg font-bold leading-relaxed text-blue-950"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      {featuredProduct?.name || "منتج مميز"}
-                    </h2>
-                  </div>
-                  <div className="flex items-start justify-between gap-4 py-2">
-                    <span
-                      className="shrink-0 text-sm font-medium text-slate-600"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      الوصف
-                    </span>
-                    <p
-                      className="max-w-[380px] text-left text-sm leading-7 text-slate-700 md:text-base"
-                      style={{ fontFamily: "'Tajawal', sans-serif" }}
-                    >
-                      {heroDescription}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between gap-4 py-2">
-                    <span
-                      className="text-sm font-medium text-slate-600"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      السعر
-                    </span>
-                    <span
-                      className="text-xl font-black text-blue-700"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      {heroPrice}
-                    </span>
-                  </div>
-                  {featuredProduct && (
-                    <button
-                      type="button"
-                      onClick={() => onShowProduct(featuredProduct.id)}
-                      className="mt-3 w-full rounded-xl border border-blue-200 bg-white/80 px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-white"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      تفاصيل المنتج
-                    </button>
-                  )}
-                </div>
-                <div className="flex min-h-[220px] flex-col items-center justify-center rounded-[24px] border-0 bg-gradient-to-bl from-[#dbeafe]/80 via-[#bfdbfe]/80 to-[#93c5fd]/70 p-6 text-center shadow-none md:min-h-[280px]">
-                  <p
-                    className="max-w-[420px] text-base font-semibold leading-8 text-slate-800 md:text-lg"
-                    style={{ fontFamily: "'Tajawal', sans-serif" }}
-                  >
-                    اكتشف أحدث المنتجات والبرندات والفئات المتوفرة في متجرنا مع
-                    عروض حصرية ومواصفات قوية.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      document
-                        .getElementById("products")
-                        ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                    }
-                    className="mt-7 rounded-[18px] bg-[#f97316] px-8 py-3 text-lg font-black text-white shadow-lg shadow-orange-950/30 transition hover:bg-[#ea580c]"
-                    style={{ fontFamily: "'Cairo', sans-serif" }}
-                  >
-                    تسوق الآن
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CategoryCarousel
+          onCategoryChange={onCategoryChange}
+          saleProducts={saleProducts}
+          onShowProduct={onShowProduct}
+        />
       </div>
 
       {searchOpen && (
@@ -1061,7 +1194,7 @@ function HeroSection({ saleProducts }: { saleProducts: any[] }) {
   const title = featuredProduct?.name || "أحدث العروض";
   const description =
     featuredProduct?.description ||
-    "اكتشف أفضل المنتجات والعروض المميزة من متجر أبو علي للاتصالات.";
+    "اكتشف أفضل المنتجات والعروض المميزة من متجر AliGo.";
   const price = featuredProduct
     ? formatSypWithCurrency(featuredProduct.price || 0)
     : "خصم يصل إلى 50%";
@@ -1920,7 +2053,7 @@ function FeaturesSection() {
             style={{ fontFamily: "'Cairo', sans-serif" }}
           >
             <Award className="w-4 h-4" />
-            لماذا أبو علي؟
+            لماذا AliGo؟
           </div>
           <h2
             className="text-3xl md:text-4xl font-black text-gray-900"
@@ -2314,25 +2447,8 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-                <img
-                  src={LOGO_IMG}
-                  alt="أبو علي للاتصالات"
-                  className="w-8 h-8 object-contain"
-                />
-              </div>
-              <div>
-                <div
-                  className="font-black text-lg"
-                  style={{ fontFamily: "'Cairo', sans-serif" }}
-                >
-                  أبو علي للاتصالات
-                </div>
-                <div className="text-xs text-blue-400">
-                  وجهتك الأولى للتقنية
-                </div>
-              </div>
+            <div className="mb-4">
+              <BrandLogo compact={true} />
             </div>
             <p
               className="text-gray-400 text-sm leading-relaxed mb-6 max-w-sm"
@@ -2400,7 +2516,7 @@ function Footer() {
             <ul className="space-y-3">
               {[
                 { icon: Phone, text: "+966 50 000 0000" },
-                { icon: Mail, text: "info@abuali-telecom.com" },
+                { icon: Mail, text: "info@aligo.com" },
                 { icon: MapPin, text: "الرياض، المملكة العربية السعودية" },
               ].map(({ icon: Icon, text }, i) => (
                 <li key={i} className="flex items-start gap-2">
@@ -2428,7 +2544,7 @@ function Footer() {
             className="text-gray-500 text-sm"
             style={{ fontFamily: "'Cairo', sans-serif" }}
           >
-            © 2024 أبو علي للاتصالات. جميع الحقوق محفوظة.
+            © 2024 AliGo. جميع الحقوق محفوظة.
           </p>
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-green-500" />
