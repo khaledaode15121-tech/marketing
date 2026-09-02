@@ -1,13 +1,15 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ComparisonProvider } from "./contexts/ComparisonContext";
 import { ComparisonBar } from "./components/ComparisonBar";
 import ThemeToggle from "./components/ThemeToggle";
 import Home from "./pages/Home";
+import SiteHeader from "./components/SiteHeader";
+import TopBrandsBar from "./components/TopBrandsBar";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import ShoppingCart from "./pages/ShoppingCart";
@@ -45,6 +47,9 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
+  const [location] = useLocation();
+  const hideHeader = location.startsWith("/admin");
+
   return (
     <ErrorBoundary>
       <ComparisonProvider>
@@ -54,6 +59,9 @@ function App() {
             <div className="fixed left-4 top-4 z-[100]">
               <ThemeToggle compact />
             </div>
+            {/* Show header and categories bar only on non-admin pages */}
+            {!hideHeader && <SiteHeader />}
+            {!hideHeader && <TopBrandsBar />}
             <Router />
             <ComparisonBar />
           </TooltipProvider>

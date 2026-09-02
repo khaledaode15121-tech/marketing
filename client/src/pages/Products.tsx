@@ -14,6 +14,7 @@ import {
 import { Link } from "wouter";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { formatSypWithCurrency, getProductImages } from "@/lib/formatters";
+import BrandBadge from "@/components/BrandBadge";
 
 export default function Products() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -523,6 +524,9 @@ export default function Products() {
                             alt={product.name}
                             className="absolute inset-0 w-full h-full object-contain bg-muted p-2 opacity-100 group-hover:scale-110 transition-transform duration-500"
                           />
+                          {product.brand === "النهدي" && (
+                            <div className="absolute inset-0 brand-image-overlay opacity-90 pointer-events-none" />
+                          )}
                           {images[1] && (
                             <img
                               src={images[1]}
@@ -541,13 +545,8 @@ export default function Products() {
 
                         {/* Content */}
                         <div className="p-5">
-                          <div
-                            className="text-xs text-blue-600 font-semibold mb-1"
-                            style={{
-                              fontFamily: "'Space Grotesk', sans-serif",
-                            }}
-                          >
-                            {product.brand}
+                          <div className="mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                            <BrandBadge name={product.brand} />
                           </div>
                           <h3
                             className="font-bold text-gray-900 mb-2 leading-tight line-clamp-2"

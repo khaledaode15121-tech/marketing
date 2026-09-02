@@ -10,6 +10,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
+import BrandBadge from "@/components/BrandBadge";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -360,7 +361,7 @@ function Navbar({
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-50 px-3 pt-3 md:px-4 transition-all duration-300">
+    <header id="site-header" className="fixed top-0 right-0 left-0 z-50 px-3 pt-3 md:px-4">
       <div className="mx-auto max-w-[1500px] overflow-hidden rounded-[26px] border border-white/70 bg-white/85 shadow-[0_20px_50px_rgba(37,99,235,0.12)] backdrop-blur-xl">
         <div className="hidden bg-gradient-to-r from-[#0f172a] via-[#1d4ed8] to-[#fbbf24] text-white md:block">
           <div
@@ -715,114 +716,126 @@ function CategoryCarousel({
   return (
     <section
       aria-labelledby="homepage-featured-heading"
-      className="relative overflow-hidden rounded-[28px] bg-[#3B0764] shadow-[0_25px_80px_rgba(46,8,84,0.3)]"
+      className="relative overflow-hidden rounded-[22px] shadow-[0_20px_60px_rgba(37,99,235,0.15)]"
       dir="rtl"
     >
-      <div className="grid items-stretch md:grid-cols-[28%_1px_44%_1px_28%]">
-        {/* Left: purple description column (moved to left) */}
-        <div className="relative min-h-[390px] overflow-hidden bg-[#3B0764] p-5 md:min-h-[450px] md:p-8">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.12),transparent_28%),radial-gradient(circle_at_85%_80%,rgba(46,8,84,0.8),transparent_30%)]" />
-          <div className="relative z-10 flex flex-col items-start justify-between gap-4">
-            <div>
-              <p className="mb-1 text-sm font-bold text-fuchsia-100" style={{ fontFamily: "'Cairo', sans-serif" }}>عروض مختارة لك</p>
-              <h1 id="homepage-featured-heading" className="max-w-[520px] text-2xl font-black leading-tight text-white md:text-4xl" style={{ fontFamily: "'Cairo', sans-serif" }}>{featuredProduct?.name || "اكتشف عروضنا المميزة"}</h1>
-            </div>
+      <div className="grid items-stretch gap-1 bg-white/10 p-0 md:grid-cols-[1.35fr_1.65fr] md:p-0">
+        {/* Left: product image + title + description */}
+        <div className="relative overflow-hidden rounded-[16px] border border-slate-200 bg-white p-2 shadow-[0_12px_22px_rgba(15,23,42,0.04)] md:p-3">
+          <div className="mb-4 flex items-center justify-between">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-blue-700 shadow-sm" style={{ fontFamily: "'Cairo', sans-serif" }}>
+              أحدث العروض
+            </span>
             {saleProducts.length > 1 && (
-              <div className="flex shrink-0 gap-1.5 pt-2" aria-label="التنقل بين العروض">
+              <div className="flex gap-1.5" aria-label="التنقل بين العروض">
                 {saleProducts.slice(0, 5).map((product, index) => (
-                  <button key={product.id} type="button" aria-label={`العرض ${index + 1}`} onClick={() => setActiveOfferIndex(index)} className={`h-2.5 w-2.5 rounded-full transition ${index === activeOfferIndex ? "bg-orange-500" : "bg-white/80 hover:bg-blue-500"}`} />
+                  <button
+                    key={product.id}
+                    type="button"
+                    aria-label={`العرض ${index + 1}`}
+                    onClick={() => setActiveOfferIndex(index)}
+                    className={`h-2.5 w-2.5 rounded-full transition ${index === activeOfferIndex ? "bg-blue-700" : "bg-slate-200 hover:bg-blue-400"}`}
+                  />
                 ))}
               </div>
             )}
-
-            <div className="mt-3 text-right">
-              <p className="max-w-xl text-base leading-8 text-white/80 md:text-lg" style={{ fontFamily: "'Tajawal', sans-serif" }}>{offerDescription}</p>
-              <div className="mt-5 flex flex-wrap items-end gap-3">
-                <span className="text-2xl font-black text-white md:text-3xl" style={{ fontFamily: "'Cairo', sans-serif" }}>{offerPrice}</span>
-                {offerOldPrice && (<span className="pb-1 text-sm text-white/55 line-through" style={{ fontFamily: "'Cairo', sans-serif" }}>{offerOldPrice}</span>)}
-              </div>
-              <button type="button" onClick={() => featuredProduct && onShowProduct(featuredProduct.id)} disabled={!featuredProduct} className="mt-6 inline-flex items-center gap-2 rounded-[18px] bg-orange-500 px-7 py-3 text-base font-black text-white shadow-lg shadow-orange-500/30 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60" style={{ fontFamily: "'Cairo', sans-serif" }}>تسوق الآن <ArrowLeft className="h-5 w-5" /></button>
-            </div>
           </div>
-        </div>
 
-        <div className="hidden md:block h-full" style={{ background: imageBg ?? 'rgba(255,255,255,0.08)' }} />
+          <h1
+            id="homepage-featured-heading"
+            className="mb-4 text-2xl font-black leading-tight text-slate-900 md:text-[2.4rem]"
+            style={{ fontFamily: "'Cairo', sans-serif" }}
+          >
+            {featuredProduct?.name || "اكتشف عروضنا المميزة"}
+          </h1>
 
-        {/* Center: large product image with adaptive background */}
-        <div className="flex items-center justify-center min-h-[390px] p-5 md:min-h-[450px] md:p-8">
-          <div className="relative w-full max-w-[760px] rounded-[26px] overflow-hidden flex items-center justify-center" style={{background: imageBg ?? "transparent"}}>
-            {/* blurred backdrop using the product image */}
+          <div className="relative flex min-h-[300px] items-center justify-center overflow-hidden rounded-[16px] bg-gradient-to-br from-slate-50 via-white to-slate-100 p-0 shadow-inner shadow-slate-200/60">
             {offerImage && (
-              <div className="absolute inset-0 bg-center bg-cover filter blur-2xl opacity-30" style={{ backgroundImage: `url(${offerImage})` }} />
+              <div
+                className="absolute inset-0 bg-cover bg-center opacity-25 blur-2xl"
+                style={{ backgroundImage: `url(${offerImage})` }}
+              />
             )}
-            <div className="relative z-10 flex items-center justify-center p-6">
-              {offerImage ? (
-                <img key={offerImage} src={offerImage} alt={featuredProduct?.name || "منتج عليه عرض"} onLoad={handleOfferImageLoad} className="max-h-[520px] w-auto object-contain transition duration-700" />
-              ) : (
-                <div className="text-center text-sm font-bold text-slate-500">لا توجد عروض متاحة حاليًا</div>
+            <img
+              key={offerImage ?? "default-product"}
+              src={offerImage || ""}
+              alt={featuredProduct?.name || "منتج عليه عرض"}
+              onLoad={handleOfferImageLoad}
+              className="relative z-10 max-h-[340px] w-auto object-contain drop-shadow-[0_30px_50px_rgba(30,64,175,0.18)] transition duration-700"
+            />
+          </div>
+
+          <div className="mt-5 text-right">
+            <p className="text-base leading-8 text-slate-700 md:text-lg" style={{ fontFamily: "'Tajawal', sans-serif" }}>
+              {offerDescription}
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <span className="text-2xl font-black text-slate-900 md:text-[2.15rem]" style={{ fontFamily: "'Cairo', sans-serif" }}>
+                {offerPrice}
+              </span>
+              {offerOldPrice && (
+                <span className="text-sm text-slate-400 line-through" style={{ fontFamily: "'Cairo', sans-serif" }}>
+                  {offerOldPrice}
+                </span>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => featuredProduct && onShowProduct(featuredProduct.id)}
+              disabled={!featuredProduct}
+              className="mt-6 inline-flex items-center gap-2 rounded-[18px] bg-gradient-to-r from-blue-600 to-blue-700 px-7 py-3 text-base font-black text-white shadow-[0_16px_28px_rgba(37,99,235,0.24)] transition hover:from-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+              style={{ fontFamily: "'Cairo', sans-serif" }}
+            >
+              تسوق الآن
+              <ArrowLeft className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
-        <div className="hidden md:block h-full" style={{ background: imageBg ?? 'rgba(255,255,255,0.08)' }} />
+        {/* Right: category cards */}
+        <div className="relative overflow-hidden rounded-[16px] border border-slate-200 bg-white p-2 shadow-[0_10px_20px_rgba(15,23,42,0.04)] md:p-2.5">
+          <div className="mb-3 text-right">
+            <p className="mb-1 text-sm font-bold text-blue-700" style={{ fontFamily: "'Cairo', sans-serif" }}>
+              فئاتنا المميزة
+            </p>
+            <h2 className="text-2xl font-black text-slate-900 md:text-[2.1rem]" style={{ fontFamily: "'Cairo', sans-serif" }}>
+              اكتشف كل التصنيفات
+            </h2>
+          </div>
 
-        {/* Right: category floats (moved to right) */}
-        <div className="relative min-h-[390px] overflow-hidden p-5 md:min-h-[450px] md:p-7">
-          <div className="pointer-events-none absolute inset-0 opacity-70">
-            <div className="absolute -right-16 top-8 h-40 w-40 rounded-full border border-[#2E0854]/80" />
-            <div className="absolute bottom-[-45px] left-12 h-44 w-44 rotate-45 border border-[#2E0854]/70" />
-            <div className="absolute left-1/3 top-1/3 h-16 w-16 rounded-full border border-[#2E0854]/70" />
-          </div>
-          <div className="relative z-10">
-            <p className="mb-1 text-sm font-bold text-fuchsia-100" style={{ fontFamily: "'Cairo', sans-serif" }}>تصفح مجموعاتنا</p>
-            <h2 className="text-2xl font-black text-white md:text-3xl" style={{ fontFamily: "'Cairo', sans-serif" }}>كل الفئات في مكان واحد</h2>
-          </div>
           {categoryCards.length > 0 ? (
-            <div className="absolute inset-0" aria-label="صور الفئات">
-              {categoryCards.map((category, index) => (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-3">
+              {categoryCards.map((category) => (
                 <button
                   key={category.id}
                   type="button"
                   onClick={() => selectCategory(category.name)}
-                  style={randomMotion(index)}
-                  className="category-float group absolute h-16 w-16 overflow-hidden rounded-2xl border-2 border-white/90 bg-white p-0.5 shadow-xl shadow-black/25 transition duration-300 hover:z-20 hover:scale-125 hover:border-fuchsia-200 hover:shadow-[0_0_0_4px_rgba(232,121,249,0.25),0_18px_35px_rgba(0,0,0,0.35)] focus-visible:z-20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-fuchsia-300/70 sm:h-20 sm:w-20"
+                  className="group relative overflow-hidden rounded-[16px] border border-slate-200 bg-slate-50 p-1 text-center shadow-[0_12px_20px_rgba(15,23,42,0.03)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_26px_rgba(37,99,235,0.09)]"
                   aria-label={`عرض فئة ${category.name}`}
                 >
-                  <img src={category.image || ""} alt={category.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />
-                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-fuchsia-500/35 via-transparent to-white/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-[#2E0854]/90 px-1 py-1 text-[9px] font-bold text-white transition duration-300 group-hover:bg-[#2E0854] group-hover:py-2 group-hover:text-[10px]">{category.name}</span>
+                  <div className="flex items-center justify-center py-3">
+                  <div className="h-24 w-24 rounded-full overflow-hidden bg-white/20 shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
+                    <img
+                      src={category.image || ""}
+                      alt={category.name}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+                <span className="mt-1.5 block truncate px-1 text-[13px] font-bold text-slate-800 text-center" style={{ fontFamily: "'Cairo', sans-serif" }}>
+                  {category.name}
+                </span>
                 </button>
               ))}
             </div>
           ) : (
-            <div className="relative z-10 mt-8 rounded-2xl border border-[#2E0854] bg-[#2E0854]/70 p-4 text-sm leading-7 text-white/80">ستظهر صور الفئات هنا بعد إضافة صورها من لوحة الإدارة.</div>
+            <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-[#eaf6ff] via-[#93c5fd] to-[#fbbf24]/90 p-4 text-sm leading-7 text-slate-900/90 shadow-[0_16px_40px_rgba(37,99,235,0.12)]">
+              ستظهر أسماء الفئات هنا بعد إضافة الفئات في لوحة الإدارة.
+            </div>
           )}
-          <button type="button" onClick={() => selectCategory(undefined)} className="absolute bottom-5 left-5 z-20 inline-flex items-center gap-2 rounded-full border border-[#2E0854] bg-[#2E0854] px-4 py-2 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-[#2E0854]/80" style={{ fontFamily: "'Cairo', sans-serif" }}>
-            <ArrowLeft className="h-4 w-4" />
-            عرض كل الفئات
-          </button>
         </div>
       </div>
-      <style>{`
-        .category-float {
-          animation: category-float 12s ease-in-out infinite alternate;
-          will-change: transform;
-        }
-        .category-float:hover,
-        .category-float:focus-visible {
-          animation-play-state: paused;
-          transform: translate3d(0, -6px, 0) scale(1.2) rotate(0deg);
-        }
-        @keyframes category-float {
-          0% { transform: translate3d(-8px, 5px, 0) rotate(-3deg); }
-          50% { transform: translate3d(10px, -12px, 0) rotate(4deg); }
-          100% { transform: translate3d(-5px, 9px, 0) rotate(-2deg); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .category-float { animation: none; }
-        }
-      `}</style>
     </section>
   );
 }
@@ -971,76 +984,9 @@ function CatalogHero({
   };
 
   return (
-    <section id="hero" className="bg-[#3B0764] pb-10 pt-24 md:pt-28">
-      <div className="container">
-        <div className="relative z-20 -mt-12 mb-4 flex flex-wrap items-center justify-center gap-2 overflow-visible rounded-full border border-slate-200 bg-white px-3 py-2 shadow-md mx-auto max-w-[880px]">
-          {topBrands.map(brand => {
-            const brandCategories = brandCategoryMap.get(brand) ?? [];
-            const isActive = activeBrand === brand;
-            const shouldShowMenu = isActive && brandCategories.length > 0;
-
-            return (
-              <div
-                key={brand}
-                className="relative z-20"
-                onMouseEnter={() => openBrandMenu(brand)}
-                onMouseLeave={() => closeBrandMenu(brand)}
-              >
-                <button
-                  type="button"
-                  onFocus={() => openBrandMenu(brand)}
-                  onClick={() =>
-                    setActiveBrand(current =>
-                      current === brand ? null : brand
-                    )
-                  }
-                  className={`flex min-w-[120px] items-center justify-between gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${selectedCategory === brand ? "border-[#f97316] bg-[#f97316]/10 text-[#f97316]" : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-300"}`}
-                  style={{ fontFamily: "'Cairo', sans-serif", color: selectedCategory === brand ? '#f97316' : '#0f172a' }}
-                >
-                  <span>{brand}</span>
-                  <ChevronDown
-                    className={`h-3.5 w-3.5 transition-transform ${isActive ? "rotate-180" : ""}`}
-                  />
-                </button>
-
-                {shouldShowMenu && (
-                  <div
-                    className="absolute left-1/2 top-full z-[90] mt-2 w-[180px] -translate-x-1/2 rounded-[16px] border border-slate-200 bg-white p-2 shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
-                    onMouseEnter={() => openBrandMenu(brand)}
-                    onMouseLeave={() => closeBrandMenu(brand)}
-                  >
-                    <div
-                      className="mb-1 px-2 pt-1 text-center text-[10px] font-bold text-slate-400"
-                      style={{ fontFamily: "'Cairo', sans-serif" }}
-                    >
-                      الفئات المرتبطة
-                    </div>
-                    {brandCategories.map(category => (
-                      <button
-                        key={`${brand}-${category}`}
-                        type="button"
-                        onMouseDown={event => event.preventDefault()}
-                        onClick={() => {
-                          onCategoryChange(category);
-                          clearBrandMenuTimer();
-                          setActiveBrand(null);
-                          document.getElementById("products")?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                          });
-                        }}
-                        className={`block w-full rounded-xl px-2 py-2 text-center text-sm font-medium transition ${selectedCategory === category ? "bg-[#fff7ed] text-[#f97316]" : "text-slate-800 hover:bg-[#f8fafc] hover:text-[#0f172a]"}`}
-                        style={{ fontFamily: "'Cairo', sans-serif" }}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+    <section id="hero" className="hero-gradient pb-2 pt-0 md:pt-0 -mt-6 md:-mt-8">
+      <div className="container !max-w-[1700px] !px-1 md:!px-1.5">
+        {/* Top brands bar moved to global TopBrandsBar component */}
 
         <CategoryCarousel
           onCategoryChange={onCategoryChange}
@@ -1148,7 +1094,7 @@ function CatalogHero({
                               className="mt-1 block truncate text-xs text-[#f97316]"
                               style={{ fontFamily: "'Tajawal', sans-serif" }}
                             >
-                              {product.brand || "منتج متوفر"} ·{" "}
+                              <BrandBadge name={product.brand} /> ·{" "}
                               {formatSypWithCurrency(product.price)}
                             </span>
                           </span>
@@ -1805,6 +1751,9 @@ function ProductsSection({
                             alt={product.name}
                             className="absolute inset-0 h-full w-full object-contain bg-muted p-2 opacity-100 transition-transform duration-500 group-hover:scale-110"
                           />
+                          {product.brand === "النهدي" && (
+                            <div className="absolute inset-0 brand-image-overlay opacity-90 pointer-events-none" />
+                          )}
                           {productImages[1] && (
                             <img
                               src={productImages[1]}
@@ -1827,11 +1776,8 @@ function ProductsSection({
                     </div>
 
                     <div className="p-4">
-                      <div
-                        className="mb-2 text-xs font-semibold text-[#8b5cf6]"
-                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                      >
-                        {isPlaceholder ? "..." : product.brand}
+                      <div className="mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        {isPlaceholder ? "..." : <BrandBadge name={product.brand} />}
                       </div>
                       {!isPlaceholder && product.description && (
                         <p
@@ -2598,12 +2544,20 @@ export default function () {
   >();
   const { data: products = [] } = trpc.products.list.useQuery();
 
+  useEffect(() => {
+    const handler = (e: any) => {
+      setSelectedCategory(e?.detail);
+      if (e?.detail) {
+        // If header requested a category, scroll to products
+        document.getElementById("products")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+    window.addEventListener("header:category", handler as EventListener);
+    return () => window.removeEventListener("header:category", handler as EventListener);
+  }, []);
+
   return (
-    <div className="min-h-screen" dir="rtl">
-      <Navbar
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
+    <div className="min-h-screen pt-24" dir="rtl">
       <CatalogHero
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}

@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
 import { formatSypWithCurrency, getProductImages } from "@/lib/formatters";
+import BrandBadge from "@/components/BrandBadge";
 
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
@@ -199,6 +200,11 @@ export default function ProductDetails() {
                 alt={product.name}
                 className="w-full h-full object-contain bg-[#f8f8f8] p-2"
               />
+              {product.brand === "النهدي" && (
+                <div className="absolute right-4 bottom-4 z-20">
+                  <BrandBadge name={product.brand} />
+                </div>
+              )}
             </div>
             {images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
@@ -241,12 +247,9 @@ export default function ProductDetails() {
             >
               {product.name}
             </h1>
-            <p
-              className="text-blue-600 text-sm font-semibold mb-2"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              {product.brand}
-            </p>
+            <div className="mb-2">
+              <BrandBadge name={product.brand} />
+            </div>
             <p className="mb-4 text-xs font-mono text-gray-500" dir="ltr">
               معرف المنتج: {product.productCode}
             </p>

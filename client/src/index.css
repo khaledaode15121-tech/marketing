@@ -130,7 +130,14 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-background text-foreground;
+    /* Use a full-page gradient inspired by the logo (lighter blue → gold) */
+    @apply text-foreground;
+    background-image: linear-gradient(135deg, #eaf6ff 0%, #7fb3ff 30%, #2563eb 65%, #f6d155 100%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    /* keep variable fallback for environments that rely on --background */
+    background-color: var(--background);
     font-family: "Tajawal", "Cairo", sans-serif;
   }
   h1,
@@ -199,6 +206,41 @@
   }
   .border-brand-blue {
     border-color: oklch(0.45 0.25 264);
+  }
+
+  /* Hero gradient matching logo tones with a lighter blue emphasis */
+  .hero-gradient {
+    background-image: linear-gradient(135deg, #eaf6ff 0%, #7fb3ff 28%, #1d4ed8 62%, #fbbf24 100%);
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  /* Deeper hero card gradient replacing solid purple blocks with a blue → gold logo-inspired palette */
+  .hero-deep-gradient {
+    background-image: linear-gradient(135deg, #eaf6ff 0%, #93c5fd 28%, #1d4ed8 62%, #fbbf24 100%);
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  /* Brand badge gradient (used to replace plain 'النهدي' labels) */
+  .brand-badge {
+    background-image: linear-gradient(90deg, #eaf6ff 0%, #7fb3ff 45%, #1d4ed8 75%, #fbbf24 100%);
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+  }
+
+  .brand-badge-dot {
+    background-image: linear-gradient(90deg, #7fb3ff, #1d4ed8);
+  }
+
+  /* Category label gradient replacing any deep purple blocks */
+  .category-label-gradient {
+    background-image: linear-gradient(180deg, rgba(14,116,144,0.92), rgba(37,99,235,0.92), rgba(251,191,36,0.88));
+  }
+
+  /* Overlay used to obscure images for specific brands and show a gradient */
+  .brand-image-overlay {
+    background-image: linear-gradient(180deg, rgba(37,99,235,0.28), rgba(251,191,36,0.18));
   }
 
   /* Product card hover effect */
@@ -412,4 +454,35 @@
   color: var(--foreground);
   background-color: var(--card);
   border-color: var(--input);
+}
+
+/* Ensure the site header stays fixed to the viewport and does not get clipped
+   by ancestor transforms/overflow. Also add a top padding to body so content
+   is not hidden beneath the header. Adjust values if your header height
+   differs. */
+:root {
+  --site-header-height: 4.5rem; /* mobile default */
+}
+
+@media (min-width: 768px) {
+  :root {
+    --site-header-height: 5.5rem; /* desktop */
+  }
+}
+
+#site-header.fixed {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 99999 !important;
+  /* prevent being clipped by parent with overflow: hidden */
+  contain: none !important;
+  transform: none !important;
+}
+
+/* When the page uses a fixed header, add this class to <body> to reserve
+   space so content doesn't get hidden beneath the header. */
+body.has-fixed-header {
+  padding-top: var(--site-header-height);
 }
