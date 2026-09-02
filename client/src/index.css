@@ -343,13 +343,13 @@
   }
 }
 
-/* Welcome messages: physical right-to-left movement, slow and continuous. */
-@keyframes welcome-marquee-rtl {
+/* Welcome messages: physical left-to-right movement, slow and continuous. */
+@keyframes welcome-marquee-ltr {
   from {
-    transform: translateX(100vw);
+    transform: translateX(calc(-100% - 100vw));
   }
   to {
-    transform: translateX(calc(-100% - 100vw));
+    transform: translateX(100vw);
   }
 }
 
@@ -379,7 +379,7 @@
   align-items: center;
   gap: 3rem;
   white-space: nowrap;
-  animation: welcome-marquee-rtl 45s linear infinite;
+  animation: welcome-marquee-ltr 45s linear infinite;
   will-change: transform;
 }
 
