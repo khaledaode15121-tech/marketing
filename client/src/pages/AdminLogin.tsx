@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { MANAGER_SESSION_STORAGE_KEY } from "@shared/const";
 
 export default function AdminLogin() {
   const [, setLocation] = useLocation();
@@ -34,7 +35,10 @@ export default function AdminLogin() {
   const managerLoginMutation = trpc.auth.managerLogin.useMutation({
     onSuccess: async data => {
       if (typeof window !== "undefined" && data?.sessionToken) {
-        window.localStorage.setItem("manus-session-token", data.sessionToken);
+        window.localStorage.setItem(
+          MANAGER_SESSION_STORAGE_KEY,
+          data.sessionToken
+        );
       }
       await utils.auth.me.invalidate();
       toast.success("تم تسجيل دخول المدير بنجاح");

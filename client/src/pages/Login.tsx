@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
+import { USER_SESSION_STORAGE_KEY } from "@shared/const";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -26,9 +27,6 @@ export default function Login() {
   const [isExistingUser, setIsExistingUser] = useState<boolean | undefined>(
     undefined
   );
-  const [isManagerLogin, setIsManagerLogin] = useState(false);
-  const [managerUsername, setManagerUsername] = useState("");
-  const [managerPassword, setManagerPassword] = useState("");
 
   const emailKey = email.trim().toLowerCase();
   const isEmailValid = /^\S+@\S+\.\S+$/.test(emailKey);
@@ -66,7 +64,10 @@ export default function Login() {
   const loginMutation = trpc.auth.localLogin.useMutation({
     onSuccess: async data => {
       if (typeof window !== "undefined" && data?.sessionToken) {
-        window.localStorage.setItem("manus-session-token", data.sessionToken);
+        window.localStorage.setItem(
+          USER_SESSION_STORAGE_KEY,
+          data.sessionToken
+        );
       }
       await utils.auth.me.invalidate();
       toast.success("تم تسجيل الدخول بنجاح");
@@ -76,30 +77,6 @@ export default function Login() {
       toast.error(error.message || "فشل تسجيل الدخول");
     },
   });
-
-  const managerLoginMutation = trpc.auth.managerLogin.useMutation({
-    onSuccess: async data => {
-      if (typeof window !== "undefined" && data?.sessionToken) {
-        window.localStorage.setItem("manus-session-token", data.sessionToken);
-      }
-      await utils.auth.me.invalidate();
-      toast.success("تم تسجيل دخول المدير بنجاح");
-      setLocation("/admin/dashboard");
-    },
-    onError: error => toast.error(error.message || "فشل تسجيل دخول المدير"),
-  });
-
-  const handleManagerSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!managerUsername.trim() || !managerPassword) {
-      toast.error("يرجى إدخال اسم المستخدم وكلمة المرور");
-      return;
-    }
-    managerLoginMutation.mutate({
-      username: managerUsername.trim(),
-      password: managerPassword,
-    });
-  };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();

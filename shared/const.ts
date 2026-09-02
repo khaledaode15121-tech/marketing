@@ -1,4 +1,7 @@
 export const COOKIE_NAME = "app_session_id";
+export const MANAGER_COOKIE_NAME = "app_manager_session_id";
+export const USER_SESSION_STORAGE_KEY = "manus-session-token";
+export const MANAGER_SESSION_STORAGE_KEY = "manus-manager-session-token";
 export const ONE_YEAR_MS = 1000 * 60 * 60 * 24 * 365;
 export const AXIOS_TIMEOUT_MS = 30_000;
 export const UNAUTHED_ERR_MSG = 'Please login (10001)';

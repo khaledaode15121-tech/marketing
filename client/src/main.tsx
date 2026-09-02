@@ -6,6 +6,10 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import {
+  MANAGER_SESSION_STORAGE_KEY,
+  USER_SESSION_STORAGE_KEY,
+} from "@shared/const";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -43,12 +47,22 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
+        const isManagerArea =
+          typeof window !== "undefined" &&
+          window.location.pathname.startsWith("/admin");
         const token = typeof window !== "undefined"
-          ? window.localStorage.getItem("manus-session-token")
+          ? window.localStorage.getItem(
+              isManagerArea
+                ? MANAGER_SESSION_STORAGE_KEY
+                : USER_SESSION_STORAGE_KEY
+            )
           : null;
         const headers = new Headers(init?.headers ?? undefined);
         if (token) {
-          headers.set("x-session-token", token);
+          headers.set(
+            isManagerArea ? "x-manager-session-token" : "x-user-session-token",
+            token
+          );
         }
 
         return globalThis.fetch(input, {

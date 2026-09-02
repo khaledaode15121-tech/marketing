@@ -1,4 +1,8 @@
-import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import {
+  AXIOS_TIMEOUT_MS,
+  COOKIE_NAME,
+  ONE_YEAR_MS,
+} from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
@@ -255,6 +259,16 @@ class SDKServer {
 
   private getSessionTokenFromRequest(req: Request): string | undefined {
     const cookies = this.parseCookies(req.headers.cookie);
+    const managerHeader = req.headers["x-manager-session-token"];
+    if (typeof managerHeader === "string" && managerHeader.trim()) {
+      return managerHeader;
+    }
+    const userHeader = req.headers["x-user-session-token"];
+    if (typeof userHeader === "string" && userHeader.trim()) {
+      return userHeader;
+    }
+    // Manager requests must identify themselves with the manager header above;
+    // never fall back to the manager cookie on customer pages.
     const sessionCookie = cookies.get(COOKIE_NAME);
     if (sessionCookie) return sessionCookie;
 
@@ -301,8 +315,16 @@ class SDKServer {
       } as AuthenticatedUser;
     }
 
+    if (session.openId.startsWith("user:")) {
+      const user = await db.getUserByOpenId(session.openId.slice("user:".length));
+      if (!user || user.role === "admin" || user.role === "manager") {
+        throw ForbiddenError("User session is not a customer session");
+      }
+      return { ...user, lastSignedIn: new Date() } as AuthenticatedUser;
+    }
+
     if (session.openId.startsWith("manager:")) {
-      const manager = await db.getUserByOpenId(session.openId);
+      const manager = await db.getUserByOpenId(session.openId.slice("manager:".length));
       if (
         !manager ||
         (manager.role !== "admin" && manager.role !== "manager")

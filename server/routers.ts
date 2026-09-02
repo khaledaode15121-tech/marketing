@@ -1,4 +1,4 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, MANAGER_COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { sdk } from "./_core/sdk";
@@ -47,6 +47,12 @@ export const appRouter = router({
         const existingUser = await db.getUserByEmail(
           input.email.trim().toLowerCase()
         );
+        if (
+          existingUser &&
+          (existingUser.role === "admin" || existingUser.role === "manager")
+        ) {
+          throw new Error("حساب المدير يستخدم صفحة دخول لوحة التحكم فقط");
+        }
         const profile = resolveLocalLoginProfile(
           {
             email: input.email,
@@ -95,7 +101,7 @@ export const appRouter = router({
           );
         }
 
-        const sessionToken = await sdk.createSessionToken(user.openId, {
+        const sessionToken = await sdk.createSessionToken(`user:${user.openId}`, {
           name: user.name || user.email || "User",
           expiresInMs: ONE_YEAR_MS,
         });
@@ -128,7 +134,7 @@ export const appRouter = router({
         ) {
           throw new Error("اسم المستخدم أو كلمة المرور غير صحيحة");
         }
-        const sessionToken = await sdk.createSessionToken(manager.openId, {
+        const sessionToken = await sdk.createSessionToken(`manager:${manager.openId}`, {
           name: manager.name || manager.username || "مدير",
           expiresInMs: ONE_YEAR_MS,
         });
@@ -137,7 +143,7 @@ export const appRouter = router({
           lastSignedIn: new Date(),
         });
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+        ctx.res.cookie(MANAGER_COOKIE_NAME, sessionToken, {
           ...cookieOptions,
           maxAge: ONE_YEAR_MS,
         });
@@ -162,6 +168,10 @@ export const appRouter = router({
       }
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(MANAGER_COOKIE_NAME, {
+        ...cookieOptions,
+        maxAge: -1,
+      });
       return {
         success: true,
       } as const;

@@ -1,4 +1,8 @@
 import { getLoginUrl } from "@/const";
+import {
+  MANAGER_SESSION_STORAGE_KEY,
+  USER_SESSION_STORAGE_KEY,
+} from "@shared/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
@@ -12,6 +16,12 @@ export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
   const utils = trpc.useUtils();
+  const isManagerArea =
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith("/admin");
+  const sessionStorageKey = isManagerArea
+    ? MANAGER_SESSION_STORAGE_KEY
+    : USER_SESSION_STORAGE_KEY;
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
@@ -22,7 +32,9 @@ export function useAuth(options?: UseAuthOptions) {
     if (typeof window === "undefined") return null;
 
     try {
-      const stored = window.localStorage.getItem("manus-runtime-user-info");
+      const stored = window.localStorage.getItem(
+        isManagerArea ? "manus-manager-runtime-user-info" : "manus-runtime-user-info"
+      );
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
@@ -50,11 +62,13 @@ export function useAuth(options?: UseAuthOptions) {
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
       if (typeof window !== "undefined") {
-        window.localStorage.removeItem("manus-runtime-user-info");
-        window.localStorage.removeItem("manus-session-token");
+        window.localStorage.removeItem(
+          isManagerArea ? "manus-manager-runtime-user-info" : "manus-runtime-user-info"
+        );
+        window.localStorage.removeItem(sessionStorageKey);
       }
     }
-  }, [logoutMutation, utils]);
+  }, [isManagerArea, logoutMutation, sessionStorageKey, utils]);
 
   const state = useMemo(() => {
     const currentUser = meQuery.data ?? persistedUser;
@@ -78,13 +92,15 @@ export function useAuth(options?: UseAuthOptions) {
 
     if (meQuery.data) {
       window.localStorage.setItem(
-        "manus-runtime-user-info",
+        isManagerArea ? "manus-manager-runtime-user-info" : "manus-runtime-user-info",
         JSON.stringify(meQuery.data)
       );
     } else if (!meQuery.isLoading) {
-      window.localStorage.removeItem("manus-runtime-user-info");
+      window.localStorage.removeItem(
+        isManagerArea ? "manus-manager-runtime-user-info" : "manus-runtime-user-info"
+      );
     }
-  }, [meQuery.data, meQuery.isLoading]);
+  }, [isManagerArea, meQuery.data, meQuery.isLoading]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
