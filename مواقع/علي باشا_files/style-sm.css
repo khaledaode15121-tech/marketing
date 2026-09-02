@@ -1,0 +1,100 @@
+/* Global overflow fix for all mobile devices */
+@media (max-width: 768px) {
+    html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+    }
+
+    .container,
+    .container-fluid {
+        width: 100% !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        overflow-x: hidden !important;
+    }
+
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /* Reduce margin-top on mobile devices */
+    .mt-5 {
+        margin-top: 1rem !important;
+    }
+
+    /* استثناء للبطاقات - احتفظ بالمسافة بينها */
+    .row.product-row {
+        --bs-gutter-x: 12px !important;
+        --bs-gutter-y: 12px !important;
+    }
+
+    .row.product-row > [class*="col-"] {
+        padding-left: calc(var(--bs-gutter-x) * 0.5) !important;
+        padding-right: calc(var(--bs-gutter-x) * 0.5) !important;
+    }
+
+    /* باقي الأعمدة بدون padding */
+    .row:not(.product-row) > [class*="col-"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+}
+
+/* Extra small devices (phones, less than 576px) */
+@media (max-width: 575.98px) {
+    .sticky-col {
+        position: relative;
+
+
+    }
+
+    .scroll-col {
+        max-height: none; /* ارتفاع الشاشة ناقص الهيدر */
+        overflow-y: auto; /* تفعيل التمرير */
+        padding-right: 10px;
+    }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .sticky-col {
+        position: relative;
+
+
+    }
+
+    .scroll-col {
+        max-height: none; /* ارتفاع الشاشة ناقص الهيدر */
+        overflow-y: auto; /* تفعيل التمرير */
+        padding-right: 10px;
+    }
+}
+
+
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    /* Add responsive styles here */
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    /* Add responsive styles here */
+}
+
+/* High-resolution mobile devices in landscape mode */
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+    /* Add responsive styles here */
+}
+
+/* Extra extra large devices (very large desktops, 1400px and up) */
+@media (min-width: 1400px) {
+    /* Add responsive styles here */
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+
+}
+/*BreadCrumb*/
