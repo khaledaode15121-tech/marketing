@@ -1401,7 +1401,10 @@ function ProductsSection({
         return;
       }
 
-      toast.error(`تعذر إضافة المنتج إلى السلة: ${error.message}`);
+      const message = error.message.includes("Failed query")
+        ? "قاعدة البيانات لا تحتوي على جدول السلة أو أن بنية الجدول غير مكتملة. يرجى تطبيق آخر تحديث ثم المحاولة مجدداً."
+        : error.message;
+      toast.error(`تعذر إضافة المنتج إلى السلة: ${message}`);
     },
   });
 

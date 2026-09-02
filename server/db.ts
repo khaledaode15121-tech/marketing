@@ -95,6 +95,23 @@ async function ensureDatabaseSchemaCompatibility() {
 
       const requiredTables = [
         {
+          // The SQL dump uses the lowercase table name. Keep this explicit so
+          // fresh or partially migrated databases can serve cart requests.
+          table: "cartitems",
+          sql: `CREATE TABLE IF NOT EXISTS \`cartitems\` (
+            \`id\` INT NOT NULL AUTO_INCREMENT,
+            \`userId\` INT NOT NULL,
+            \`productId\` INT NOT NULL,
+            \`quantity\` INT NOT NULL,
+            \`rentalDate\` DATE NULL,
+            \`addedAt\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            \`updatedAt\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (\`id\`),
+            KEY \`idx_cartitems_user\` (\`userId\`),
+            KEY \`idx_cartitems_product\` (\`productId\`)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+        },
+        {
           table: "managerCategoryAssignments",
           sql: `CREATE TABLE IF NOT EXISTS \`managerCategoryAssignments\` (
             \`id\` INT NOT NULL AUTO_INCREMENT,
