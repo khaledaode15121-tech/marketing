@@ -1388,11 +1388,20 @@ function ProductsSection({
   const addToCartMutation = trpc.cart.add.useMutation({
     onSuccess: () => {
       void utils.cart.list.invalidate();
-      toast.success("تم إضافة المنتج إلى السلة");
+      toast.success("تمت إضافة المنتج إلى السلة بنجاح");
     },
-    onError: () => {
-      toast.error("يرجى تسجيل الدخول أولاً");
-      window.location.href = getLoginUrl();
+    onError: error => {
+      const isUnauthorized =
+        error.message === "Authentication required" ||
+        error.message.toLowerCase().includes("unauthorized");
+
+      if (isUnauthorized) {
+        toast.error("انتهت جلسة الدخول، يرجى تسجيل الدخول مجدداً");
+        window.location.href = getLoginUrl();
+        return;
+      }
+
+      toast.error(`تعذر إضافة المنتج إلى السلة: ${error.message}`);
     },
   });
 
@@ -1865,6 +1874,7 @@ function ProductsSection({
                             <div className="flex w-full flex-row flex-nowrap items-center gap-2">
                               {product.isSellable !== false && (
                                 <Button
+                                  type="button"
                                   size="sm"
                                   onClick={() => handleAddToCart(product.id)}
                                   disabled={addToCartMutation.isPending}

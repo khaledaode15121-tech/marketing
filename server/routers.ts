@@ -208,10 +208,23 @@ export const appRouter = router({
     }),
     add: publicProcedure
       .input(
-        z.object({ productId: z.number(), quantity: z.number().default(1) })
+        z.object({
+          productId: z.number().int().positive(),
+          quantity: z.number().int().positive().default(1),
+        })
       )
-      .mutation(({ ctx, input }) => {
+      .mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new Error("Authentication required");
+
+        const product = await db.getProductById(input.productId);
+        if (!product) throw new Error("المنتج غير موجود");
+        if (product.isSellable === false) {
+          throw new Error("هذا المنتج غير متاح للبيع");
+        }
+        if ((product.stock ?? 0) < input.quantity) {
+          throw new Error("الكمية المطلوبة غير متوفرة في المخزون");
+        }
+
         return db.addToCart(ctx.user.id, input.productId, input.quantity);
       }),
     remove: publicProcedure.input(z.number()).mutation(({ ctx, input }) => {
