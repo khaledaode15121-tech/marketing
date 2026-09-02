@@ -71,6 +71,25 @@ async function ensureDatabaseSchemaCompatibility() {
     const connection = await mysql.createConnection(databaseUrl);
 
     try {
+      const [cartTables] = await connection.query<RowDataPacket[]>(
+        "SHOW TABLES LIKE ?",
+        ["cartitems"]
+      );
+      if (!cartTables.length) {
+        await connection.query(`CREATE TABLE IF NOT EXISTS \`cartitems\` (
+          \`id\` INT NOT NULL AUTO_INCREMENT,
+          \`userId\` INT NOT NULL,
+          \`productId\` INT NOT NULL,
+          \`quantity\` INT NOT NULL DEFAULT 1,
+          \`rentalDate\` DATE NULL,
+          \`addedAt\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          \`updatedAt\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (\`id\`),
+          KEY \`idx_cartitems_user\` (\`userId\`),
+          KEY \`idx_cartitems_product\` (\`productId\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+      }
+
       const tableChecks = [
         {
           table: "products",
@@ -89,6 +108,22 @@ async function ensureDatabaseSchemaCompatibility() {
           columns: [
             ["image", "TEXT NULL"],
             ["managerId", "INT NULL"],
+          ],
+        },
+        {
+          // Existing installations may have an older cart table without the
+          // columns used by the current cart queries.
+          table: "cartitems",
+          columns: [
+            ["userId", "INT NOT NULL"],
+            ["productId", "INT NOT NULL"],
+            ["quantity", "INT NOT NULL DEFAULT 1"],
+            ["rentalDate", "DATE NULL"],
+            ["addedAt", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"],
+            [
+              "updatedAt",
+              "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+            ],
           ],
         },
       ];
