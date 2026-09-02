@@ -2,7 +2,7 @@ ALTER TABLE products
   ADD COLUMN isSellable BOOLEAN NOT NULL DEFAULT TRUE,
   ADD COLUMN purchasePrice DECIMAL(10,2) NULL;
 
-ALTER TABLE cartItems
+ALTER TABLE cartitems
   ADD COLUMN rentalDate DATE NULL;
 
 ALTER TABLE rentalBookings

@@ -128,7 +128,9 @@ export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
 
 // ─── Shopping Cart Table ──────────────────────────────────────────────────────
-export const cartItems = mysqlTable("cartItems", {
+// Keep the table name lowercase to match the production SQL dump. MySQL table
+// names can be case-sensitive on Linux, so "cartItems" would point elsewhere.
+export const cartItems = mysqlTable("cartitems", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   productId: int("productId").notNull(),
