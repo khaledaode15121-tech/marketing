@@ -90,6 +90,30 @@ async function ensureDatabaseSchemaCompatibility() {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
       }
 
+      const [orderTables] = await connection.query<RowDataPacket[]>(
+        "SHOW TABLES LIKE ?",
+        ["orders"]
+      );
+      if (!orderTables.length) {
+        await connection.query(`CREATE TABLE IF NOT EXISTS \`orders\` (
+          \`id\` INT NOT NULL AUTO_INCREMENT,
+          \`userId\` INT NOT NULL,
+          \`totalPrice\` DECIMAL(10,2) NOT NULL,
+          \`status\` ENUM('pending','processing','shipped','delivered','cancelled') DEFAULT 'pending',
+          \`paymentStatus\` ENUM('unpaid','paid','refunded') NOT NULL DEFAULT 'unpaid',
+          \`paymentMethod\` VARCHAR(100) NOT NULL,
+          \`customerName\` TEXT NULL,
+          \`customerPhone\` VARCHAR(20) NULL,
+          \`shippingAddress\` TEXT NULL,
+          \`estimatedDeliveryMinutes\` INT NULL,
+          \`items\` JSON NULL,
+          \`createdAt\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          \`updatedAt\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (\`id\`),
+          KEY \`idx_orders_user\` (\`userId\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+      }
+
       const tableChecks = [
         {
           table: "products",
@@ -124,6 +148,20 @@ async function ensureDatabaseSchemaCompatibility() {
               "updatedAt",
               "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
             ],
+          ],
+        },
+        {
+          table: "orders",
+          columns: [
+            ["paymentStatus", "ENUM('unpaid','paid','refunded') NOT NULL DEFAULT 'unpaid'"],
+            ["paymentMethod", "VARCHAR(100) NOT NULL DEFAULT 'الدفع عند الاستلام'"],
+            ["customerName", "TEXT NULL"],
+            ["customerPhone", "VARCHAR(20) NULL"],
+            ["shippingAddress", "TEXT NULL"],
+            ["estimatedDeliveryMinutes", "INT NULL"],
+            ["items", "JSON NULL"],
+            ["createdAt", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"],
+            ["updatedAt", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"],
           ],
         },
       ];
