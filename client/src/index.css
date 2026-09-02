@@ -343,12 +343,13 @@
   }
 }
 
-@keyframes marquee {
+/* Welcome messages: physical right-to-left movement, slow and continuous. */
+@keyframes welcome-marquee-rtl {
   from {
-    transform: translateX(0);
+    transform: translateX(100vw);
   }
   to {
-    transform: translateX(-50%);
+    transform: translateX(calc(-100% - 100vw));
   }
 }
 
@@ -372,8 +373,18 @@
   animation: slideInRight 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
-.animate-marquee {
-  animation: marquee 30s linear infinite;
+.welcome-marquee-content {
+  display: inline-flex;
+  min-width: max-content;
+  align-items: center;
+  gap: 3rem;
+  white-space: nowrap;
+  animation: welcome-marquee-rtl 45s linear infinite;
+  will-change: transform;
+}
+
+.welcome-marquee-message {
+  display: inline-block;
 }
 
 .animate-pulse-ring {
@@ -403,7 +414,7 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
   .animate-slide-in-right,
-  .animate-marquee,
+  .welcome-marquee-content,
   .animate-pulse-ring {
     animation: none;
     opacity: 1;

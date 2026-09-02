@@ -24,34 +24,31 @@ import {
 // ─── Scroll Animation Hook ────────────────────────────────────────────────────
 function WelcomeMarquee() {
   const { data: messages = [] } = trpc.dashboard.welcomeMessages.active.useQuery();
-  const activeMsg = messages[0];
 
-  if (!activeMsg) return null;
+  if (messages.length === 0) return null;
 
   return (
-    <div className="mb-4 overflow-hidden whitespace-nowrap bg-white/80 backdrop-blur-md rounded-2xl py-3 border border-blue-100 shadow-sm relative z-10">
-      <div 
-        className="inline-block animate-marquee"
-        style={{
-          color: activeMsg.color || "#000000",
-          fontSize: activeMsg.style?.fontSize || "18px",
-          fontWeight: activeMsg.style?.fontWeight || "bold",
-          fontFamily: activeMsg.style?.fontFamily || "Cairo",
-        }}
-      >
-        {activeMsg.content}
+    <div
+      className="welcome-marquee mb-4 overflow-hidden rounded-2xl border border-blue-100 bg-white/80 py-3 shadow-sm backdrop-blur-md"
+      aria-label="الرسائل الترحيبية"
+    >
+      <div className="welcome-marquee-content" dir="rtl">
+        {messages.map((message, index) => (
+          <span
+            key={message.id}
+            className="welcome-marquee-message"
+            style={{
+              color: message.color || "#000000",
+              fontSize: message.style?.fontSize || "18px",
+              fontWeight: message.style?.fontWeight || "bold",
+              fontFamily: message.style?.fontFamily || "Cairo",
+            }}
+          >
+            {message.content}
+            {index < messages.length - 1 && <span aria-hidden="true"> ✦ </span>}
+          </span>
+        ))}
       </div>
-      <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
-        }
-        .animate-marquee {
-          display: inline-block;
-          padding-left: 100%;
-          animation: marquee 25s linear infinite;
-        }
-      `}</style>
     </div>
   );
 }
