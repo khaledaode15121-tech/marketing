@@ -275,10 +275,25 @@ export const appRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new Error("Authentication required");
-        const storedUser =
+        let storedUser =
           ctx.user.id > 0
             ? ctx.user
             : await db.getUserByOpenId(ctx.user.openId.replace(/^user:/, ""));
+        if (!storedUser && ctx.user.email) {
+          storedUser = await db.getUserByEmail(ctx.user.email);
+        }
+        if (!storedUser && ctx.user.email) {
+          await db.upsertUser({
+            openId: ctx.user.openId.replace(/^user:/, ""),
+            name: ctx.user.name,
+            email: ctx.user.email,
+            phone: ctx.user.phone ?? null,
+            address: ctx.user.address ?? null,
+            loginMethod: "email",
+            lastSignedIn: new Date(),
+          });
+          storedUser = await db.getUserByEmail(ctx.user.email);
+        }
         if (!storedUser || storedUser.id <= 0) {
           throw new Error("لا يمكن العثور على حساب المستخدم في قاعدة البيانات");
         }
