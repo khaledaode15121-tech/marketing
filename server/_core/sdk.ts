@@ -304,7 +304,7 @@ class SDKServer {
     }
 
     if (session.openId.startsWith("local:")) {
-      const user = await db.getUserByOpenId(session.openId);
+      const user = await this.ensureLocalUser(session.openId, session.name);
       if (!user) {
         throw ForbiddenError("Local session user not found in database");
       }
@@ -321,7 +321,10 @@ class SDKServer {
     }
 
     if (session.openId.startsWith("user:")) {
-      const user = await db.getUserByOpenId(session.openId.slice("user:".length));
+      const customerOpenId = session.openId.slice("user:".length);
+      const user = customerOpenId.startsWith("local:")
+        ? await this.ensureLocalUser(customerOpenId, session.name)
+        : await db.getUserByOpenId(customerOpenId);
       if (!user || user.role === "admin" || user.role === "manager") {
         throw ForbiddenError("User session is not a customer session");
       }
@@ -371,6 +374,30 @@ class SDKServer {
       lastSignedIn: signedInAt,
     });
 
+    return user;
+  }
+
+  /**
+   * Local-login sessions contain the email in their openId. Recovering the
+   * row here is important because cart and checkout procedures require a
+   * positive database user id; otherwise a stale session is treated as an
+   * unauthenticated request by the tRPC context.
+   */
+  private async ensureLocalUser(openId: string, sessionName?: string) {
+    let user = await db.getUserByOpenId(openId);
+    if (user) return user;
+
+    const email = openId.slice("local:".length).trim().toLowerCase();
+    if (!email || !email.includes("@")) return undefined;
+
+    await db.upsertUser({
+      openId,
+      name: sessionName?.trim() || email.split("@")[0] || "مستخدم",
+      email,
+      loginMethod: "email",
+      lastSignedIn: new Date(),
+    });
+    user = await db.getUserByOpenId(openId);
     return user;
   }
 }
