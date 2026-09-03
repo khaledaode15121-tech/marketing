@@ -26,8 +26,6 @@ export default function AdminLogin() {
     if (!loading && user) {
       if (user.role === "admin" || user.role === "manager") {
         setLocation("/admin/dashboard");
-      } else {
-        setLocation("/");
       }
     }
   }, [loading, setLocation, user]);

@@ -1,6 +1,7 @@
 import {
   AXIOS_TIMEOUT_MS,
   COOKIE_NAME,
+  MANAGER_COOKIE_NAME,
   ONE_YEAR_MS,
 } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
@@ -259,17 +260,21 @@ class SDKServer {
 
   private getSessionTokenFromRequest(req: Request): string | undefined {
     const cookies = this.parseCookies(req.headers.cookie);
+    const authScope = req.headers["x-auth-scope"];
+    const isManagerScope = authScope === "manager";
     const managerHeader = req.headers["x-manager-session-token"];
-    if (typeof managerHeader === "string" && managerHeader.trim()) {
+    if (isManagerScope && typeof managerHeader === "string" && managerHeader.trim()) {
       return managerHeader;
     }
     const userHeader = req.headers["x-user-session-token"];
-    if (typeof userHeader === "string" && userHeader.trim()) {
+    if (!isManagerScope && typeof userHeader === "string" && userHeader.trim()) {
       return userHeader;
     }
-    // Manager requests must identify themselves with the manager header above;
-    // never fall back to the manager cookie on customer pages.
-    const sessionCookie = cookies.get(COOKIE_NAME);
+    // Cookies are scoped by the request as a final fallback. A customer cookie
+    // can never authenticate a manager-area request, and vice versa.
+    const sessionCookie = isManagerScope
+      ? cookies.get(MANAGER_COOKIE_NAME)
+      : cookies.get(COOKIE_NAME);
     if (sessionCookie) return sessionCookie;
 
     const headerToken = req.headers["x-session-token"];

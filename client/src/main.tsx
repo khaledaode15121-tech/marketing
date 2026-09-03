@@ -64,6 +64,7 @@ const trpcClient = trpc.createClient({
             token
           );
         }
+        headers.set("x-auth-scope", isManagerArea ? "manager" : "user");
 
         return globalThis.fetch(input, {
           ...(init ?? {}),
