@@ -133,9 +133,23 @@ async function ensureDatabaseSchemaCompatibility() {
         {
           table: "products",
           columns: [
+            ["productCode", "VARCHAR(64) NULL"],
+            ["categoryId", "INT NULL"],
+            ["brandId", "INT NULL"],
             ["oldPrice", "DECIMAL(10,2) NULL"],
+            ["isRentable", "BOOLEAN NOT NULL DEFAULT FALSE"],
             ["isSellable", "BOOLEAN NOT NULL DEFAULT TRUE"],
             ["purchasePrice", "DECIMAL(10,2) NULL"],
+            ["rentalPrice", "DECIMAL(10,2) NULL"],
+            ["images", "JSON NULL"],
+            ["rating", "DECIMAL(3,2) NULL DEFAULT 0"],
+            ["reviewCount", "INT NULL DEFAULT 0"],
+            ["stock", "INT NULL DEFAULT 0"],
+            ["isOnSale", "BOOLEAN NOT NULL DEFAULT FALSE"],
+            ["badge", "VARCHAR(100) NULL"],
+            ["badgeColor", "VARCHAR(50) NULL"],
+            ["color", "VARCHAR(100) NULL"],
+            ["size", "VARCHAR(100) NULL"],
           ],
         },
         {
