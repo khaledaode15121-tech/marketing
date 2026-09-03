@@ -71,6 +71,21 @@ async function ensureDatabaseSchemaCompatibility() {
     const connection = await mysql.createConnection(databaseUrl);
 
     try {
+      // Older SQL dumps used `cartItems`, while the application schema uses
+      // the lowercase `cartitems`. On Linux MySQL treats these as different
+      // tables, so normalize the legacy name before any Drizzle query runs.
+      const [cartNameRows] = await connection.query<RowDataPacket[]>(
+        `SELECT TABLE_NAME FROM information_schema.TABLES
+         WHERE TABLE_SCHEMA = DATABASE() AND LOWER(TABLE_NAME) = LOWER(?)`,
+        ["cartitems"]
+      );
+      const cartNames = cartNameRows.map(row => String(row.TABLE_NAME));
+      const lowerCartName = cartNames.find(name => name === "cartitems");
+      const legacyCartName = cartNames.find(name => name === "cartItems");
+      if (!lowerCartName && legacyCartName) {
+        await connection.query("RENAME TABLE `cartItems` TO `cartitems`");
+      }
+
       const [cartTables] = await connection.query<RowDataPacket[]>(
         "SHOW TABLES LIKE ?",
         ["cartitems"]
@@ -167,6 +182,59 @@ async function ensureDatabaseSchemaCompatibility() {
       ];
 
       const requiredTables = [
+        {
+          table: "users",
+          sql: `CREATE TABLE IF NOT EXISTS users (
+            id INT NOT NULL AUTO_INCREMENT, openId VARCHAR(64) NOT NULL,
+            username VARCHAR(100) NULL, passwordHash VARCHAR(255) NULL,
+            name TEXT NULL, email VARCHAR(320) NULL, phone VARCHAR(20) NULL,
+            address TEXT NULL, loginMethod VARCHAR(64) NULL, token TEXT NULL,
+            role ENUM('user','admin','manager') NOT NULL DEFAULT 'user',
+            createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            lastSignedIn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id), UNIQUE KEY uq_users_openId (openId), UNIQUE KEY uq_users_username (username)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+        },
+        {
+          table: "category",
+          sql: `CREATE TABLE IF NOT EXISTS category (
+            id INT NOT NULL AUTO_INCREMENT, categoryCode VARCHAR(32) NOT NULL,
+            name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL,
+            description TEXT NULL, sectionId INT NULL, image TEXT NULL,
+            isActive BOOLEAN NOT NULL DEFAULT TRUE, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id), UNIQUE KEY uq_category_code (categoryCode), UNIQUE KEY uq_category_slug (slug)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+        },
+        {
+          table: "brand",
+          sql: `CREATE TABLE IF NOT EXISTS brand (
+            id INT NOT NULL AUTO_INCREMENT, brandCode VARCHAR(32) NOT NULL,
+            name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL,
+            description TEXT NULL, logo TEXT NULL, image TEXT NULL,
+            managerId INT NULL, isActive BOOLEAN NOT NULL DEFAULT TRUE,
+            createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id), UNIQUE KEY uq_brand_code (brandCode), UNIQUE KEY uq_brand_slug (slug)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+        },
+        {
+          table: "products",
+          sql: `CREATE TABLE IF NOT EXISTS products (
+            id INT NOT NULL AUTO_INCREMENT, productCode VARCHAR(64) NOT NULL,
+            name VARCHAR(255) NOT NULL, brand VARCHAR(100) NOT NULL, category VARCHAR(100) NOT NULL,
+            categoryId INT NULL, brandId INT NULL, description TEXT NULL,
+            price DECIMAL(10,2) NOT NULL, oldPrice DECIMAL(10,2) NULL,
+            isRentable BOOLEAN NOT NULL DEFAULT FALSE, isSellable BOOLEAN NOT NULL DEFAULT TRUE,
+            purchasePrice DECIMAL(10,2) NULL, rentalPrice DECIMAL(10,2) NULL,
+            image TEXT NULL, images JSON NULL, rating DECIMAL(3,2) DEFAULT 0,
+            reviewCount INT DEFAULT 0, stock INT DEFAULT 0, isOnSale BOOLEAN NOT NULL DEFAULT FALSE,
+            badge VARCHAR(100) NULL, badgeColor VARCHAR(50) NULL, color VARCHAR(100) NULL, size VARCHAR(100) NULL,
+            createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id), UNIQUE KEY uq_products_code (productCode)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+        },
         {
           // The SQL dump uses the lowercase table name. Keep this explicit so
           // fresh or partially migrated databases can serve cart requests.
@@ -281,6 +349,18 @@ async function ensureDatabaseSchemaCompatibility() {
         }
       ];
 
+      // Create missing feature tables before inspecting their columns. This
+      // makes a fresh or partially migrated database self-healing instead of
+      // aborting the whole compatibility pass at the first missing table.
+      for (const { table, sql } of requiredTables) {
+        const [tables] = await connection.query<RowDataPacket[]>(
+          `SELECT TABLE_NAME FROM information_schema.TABLES
+           WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
+          [table]
+        );
+        if (!tables.length) await connection.query(sql);
+      }
+
       for (const { table, columns } of tableChecks) {
         const [rows] = await connection.query<RowDataPacket[]>(`SHOW COLUMNS FROM \`${table}\``);
         const existingFields = new Set(rows.map(row => row.Field));
@@ -296,7 +376,11 @@ async function ensureDatabaseSchemaCompatibility() {
       }
 
       for (const { table, sql } of requiredTables) {
-        const [tables] = await connection.query<RowDataPacket[]>(`SHOW TABLES LIKE ?`, [table]);
+        const [tables] = await connection.query<RowDataPacket[]>(
+          `SELECT TABLE_NAME FROM information_schema.TABLES
+           WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
+          [table]
+        );
         if (!tables.length) {
           await connection.query(sql);
         }
