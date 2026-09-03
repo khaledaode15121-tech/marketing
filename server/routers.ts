@@ -275,7 +275,14 @@ export const appRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         if (!ctx.user) throw new Error("Authentication required");
-        const user = ctx.user;
+        const storedUser =
+          ctx.user.id > 0
+            ? ctx.user
+            : await db.getUserByOpenId(ctx.user.openId.replace(/^user:/, ""));
+        if (!storedUser || storedUser.id <= 0) {
+          throw new Error("لا يمكن العثور على حساب المستخدم في قاعدة البيانات");
+        }
+        const user = storedUser;
         return db.createOrderFromCart(
           user.id,
           input.paymentMethod,
