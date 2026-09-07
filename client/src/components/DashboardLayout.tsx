@@ -101,6 +101,11 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
 
+  const handleManagerLogout = async () => {
+    await logout();
+    setLocation("/admin/login");
+  };
+
   useEffect(() => {
     if (isCollapsed) {
       setIsResizing(false);
@@ -214,7 +219,7 @@ function DashboardLayoutContent({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
-                  onClick={logout}
+                  onClick={() => void handleManagerLogout()}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />

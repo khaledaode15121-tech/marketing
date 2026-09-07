@@ -137,6 +137,7 @@ export default function SiteHeader() {
   }, []);
 
   const handleLogout = async () => {
+    if (!window.confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) return;
     try {
       await logout();
       navigate("/");

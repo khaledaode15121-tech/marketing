@@ -5,7 +5,7 @@ import {
 } from "@shared/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -28,7 +28,7 @@ export function useAuth(options?: UseAuthOptions) {
     refetchOnWindowFocus: false,
   });
 
-  const persistedUser = useMemo(() => {
+  const [persistedUser, setPersistedUser] = useState(() => {
     if (typeof window === "undefined") return null;
 
     try {
@@ -39,7 +39,7 @@ export function useAuth(options?: UseAuthOptions) {
     } catch {
       return null;
     }
-  }, []);
+  });
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
@@ -59,6 +59,7 @@ export function useAuth(options?: UseAuthOptions) {
       }
       throw error;
     } finally {
+      setPersistedUser(null);
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
       if (typeof window !== "undefined") {
@@ -91,11 +92,13 @@ export function useAuth(options?: UseAuthOptions) {
     if (typeof window === "undefined") return;
 
     if (meQuery.data) {
+      setPersistedUser(meQuery.data);
       window.localStorage.setItem(
         isManagerArea ? "manus-manager-runtime-user-info" : "manus-runtime-user-info",
         JSON.stringify(meQuery.data)
       );
     } else if (!meQuery.isLoading) {
+      setPersistedUser(null);
       window.localStorage.removeItem(
         isManagerArea ? "manus-manager-runtime-user-info" : "manus-runtime-user-info"
       );
