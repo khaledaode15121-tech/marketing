@@ -21,7 +21,7 @@ describe("resolveLocalLoginProfile", () => {
       { email: "ahmed@example.com", name: "أحمد" }
     );
     const fresh = resolveLocalLoginProfile(
-      { email: "new@example.com", name: "سارة", phone: "0500000000", address: "الرياض" },
+      { email: "new@example.com", password: "secret", name: "سارة", phone: "0500000000", address: "الرياض" },
       false
     );
 

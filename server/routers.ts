@@ -13,7 +13,9 @@ import { z } from "zod";
 import * as db from "./db";
 import { sendRentalWhatsAppNotification } from "./twilio";
 import {
+  hashPassword,
   hashManagerPassword,
+  verifyPassword,
   verifyManagerPassword,
 } from "./_core/managerAuth";
 import {
@@ -39,6 +41,7 @@ export const appRouter = router({
       .input(
         z.object({
           email: z.string().email(),
+          password: z.string().min(5).optional(),
           name: z.string().optional(),
           phone: z.string().optional(),
           address: z.string().optional(),
@@ -57,6 +60,7 @@ export const appRouter = router({
         const profile = resolveLocalLoginProfile(
           {
             email: input.email,
+            password: input.password,
             name: input.name,
             phone: input.phone,
             address: input.address,
@@ -64,6 +68,16 @@ export const appRouter = router({
           Boolean(existingUser),
           existingUser
         );
+
+        if (
+          existingUser?.passwordHash &&
+          (!input.password ||
+            !ctx.user ||
+            ctx.user.id !== existingUser.id ||
+            !verifyPassword(input.password, existingUser.passwordHash))
+        ) {
+          throw new Error("كلمة المرور غير صحيحة");
+        }
 
         let user: Awaited<ReturnType<typeof db.getUserByEmail>> | null = null;
 
@@ -75,6 +89,9 @@ export const appRouter = router({
             phone: profile.phone ?? existingUser.phone ?? null,
             address: profile.address ?? existingUser.address ?? null,
             loginMethod: "email",
+            passwordHash:
+              existingUser.passwordHash ??
+              (input.password ? hashPassword(input.password) : undefined),
             lastSignedIn: new Date(),
           });
         } else {
@@ -86,6 +103,7 @@ export const appRouter = router({
               phone: profile.phone ?? null,
               address: profile.address ?? null,
               loginMethod: "email",
+              passwordHash: hashPassword(profile.password!),
               lastSignedIn: new Date(),
             });
             user =

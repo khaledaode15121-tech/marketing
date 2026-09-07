@@ -565,6 +565,7 @@ export async function updateUserById(
       | "lastSignedIn"
       | "role"
       | "token"
+      | "passwordHash"
     >
   >
 ) {

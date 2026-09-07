@@ -2,7 +2,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 const KEY_LENGTH = 64;
 
-export function hashManagerPassword(password: string) {
+export function hashPassword(password: string) {
   if (password.length < 5) {
     throw new Error("كلمة المرور يجب أن تكون 5 أحرف على الأقل");
   }
@@ -28,3 +28,6 @@ export function verifyManagerPassword(
     return false;
   }
 }
+
+export const hashManagerPassword = hashPassword;
+export const verifyPassword = verifyManagerPassword;

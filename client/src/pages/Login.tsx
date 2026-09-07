@@ -24,6 +24,7 @@ export default function Login() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [password, setPassword] = useState("");
   const [isExistingUser, setIsExistingUser] = useState<boolean | undefined>(
     undefined
   );
@@ -110,10 +111,15 @@ export default function Login() {
         toast.error("يرجى إدخال عنوان السكن");
         return;
       }
+      if (password.length < 5) {
+        toast.error("يرجى إدخال كلمة مرور من 5 أحرف على الأقل");
+        return;
+      }
     }
 
     loginMutation.mutate({
       email: email.trim(),
+      password,
       name: name.trim() || undefined,
       phone: phone.trim() || undefined,
       address: address.trim() || undefined,
@@ -126,6 +132,7 @@ export default function Login() {
     setName("");
     setPhone("");
     setAddress("");
+    setPassword("");
     setIsExistingUser(false);
   };
 
@@ -188,6 +195,20 @@ export default function Login() {
                   onChange={event => setName(event.target.value)}
                   placeholder="مثال: أحمد"
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">كلمة المرور</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={event => setPassword(event.target.value)}
+                  placeholder="5 أحرف على الأقل"
+                  minLength={5}
+                  required
+                  autoComplete={isExistingUser === false ? "new-password" : "current-password"}
                 />
               </div>
 

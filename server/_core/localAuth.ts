@@ -2,6 +2,7 @@ import type { User } from "../../drizzle/schema";
 
 export type LocalAuthInput = {
   email: string;
+  password?: string;
   name?: string;
   phone?: string;
   address?: string;
@@ -9,6 +10,7 @@ export type LocalAuthInput = {
 
 export function normalizeLocalAuthInput(input: LocalAuthInput) {
   const email = input.email.trim().toLowerCase();
+  const password = input.password;
   const name = input.name?.trim();
   const phone = input.phone?.trim();
   const address = input.address?.trim();
@@ -19,6 +21,7 @@ export function normalizeLocalAuthInput(input: LocalAuthInput) {
 
   return {
     email,
+    password,
     name: name || email.split("@")[0] || "مستخدم",
     phone,
     address,
@@ -74,6 +77,10 @@ export function resolveLocalLoginProfile(
 
   if (!normalized.name) {
     throw new Error("الاسم مطلوب للحساب الجديد");
+  }
+
+  if (!normalized.password || normalized.password.length < 5) {
+    throw new Error("كلمة المرور مطلوبة ويجب أن تكون 5 أحرف على الأقل");
   }
 
   if (!normalized.phone) {
