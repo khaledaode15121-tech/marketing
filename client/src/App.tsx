@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import Login from "./pages/Login";
 import Orders from "./pages/Orders";
+import AccountSettings from "./pages/AccountSettings";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -31,9 +32,11 @@ function Router() {
       <Route path={"/wishlist"} component={Wishlist} />
       <Route path={"/comparison"} component={Comparison} />
       <Route path={"/orders"} component={Orders} />
+      <Route path={"/account"} component={AccountSettings} />
       <Route path={"/login"} component={Login} />
       <Route path={"/admin/login"} component={AdminLogin} />
       <Route path={"/admin/dashboard"} component={AdminDashboard} />
+      <Route path={"/admin/account"} component={AccountSettings} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

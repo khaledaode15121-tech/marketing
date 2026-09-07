@@ -227,7 +227,7 @@ export default function ManagerManagement() {
                 onChange={event =>
                   setForm({ ...form, password: event.target.value })
                 }
-                minLength={8}
+                minLength={5}
                 required={!form.selectedUserId}
                 placeholder={form.selectedUserId ? "سيتم إنشاء كلمة مرور تلقائية" : "********"}
               />

@@ -27,6 +27,7 @@ export default function Login() {
   const [isExistingUser, setIsExistingUser] = useState<boolean | undefined>(
     undefined
   );
+  const [forceRegistration, setForceRegistration] = useState(false);
 
   const emailKey = email.trim().toLowerCase();
   const isEmailValid = /^\S+@\S+\.\S+$/.test(emailKey);
@@ -37,7 +38,7 @@ export default function Login() {
   });
 
   useEffect(() => {
-    if (emailCheckQuery.data) {
+    if (emailCheckQuery.data && !forceRegistration) {
       setIsExistingUser(emailCheckQuery.data.exists);
       if (emailCheckQuery.data.exists && !name.trim()) {
         setName(emailCheckQuery.data.name ?? "");
@@ -47,7 +48,7 @@ export default function Login() {
         setAddress("");
       }
     }
-  }, [emailCheckQuery.data, name]);
+  }, [emailCheckQuery.data, forceRegistration, name]);
 
   useEffect(() => {
     if (!loading && user) {
@@ -117,6 +118,15 @@ export default function Login() {
       phone: phone.trim() || undefined,
       address: address.trim() || undefined,
     });
+  };
+
+  const startRegistration = () => {
+    setForceRegistration(true);
+    setEmail("");
+    setName("");
+    setPhone("");
+    setAddress("");
+    setIsExistingUser(false);
   };
 
   return (
@@ -232,6 +242,15 @@ export default function Login() {
             }}
           >
             تسجيل الدخول عبر OAuth
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="mt-3 w-full text-blue-700"
+            onClick={startRegistration}
+          >
+            إضافة مستخدم جديد
           </Button>
 
         </CardContent>

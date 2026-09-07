@@ -3,8 +3,8 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 const KEY_LENGTH = 64;
 
 export function hashManagerPassword(password: string) {
-  if (password.length < 8) {
-    throw new Error("كلمة مرور المدير يجب أن تكون 8 أحرف على الأقل");
+  if (password.length < 5) {
+    throw new Error("كلمة المرور يجب أن تكون 5 أحرف على الأقل");
   }
   const salt = randomBytes(16).toString("hex");
   const derivedKey = scryptSync(password, salt, KEY_LENGTH).toString("hex");

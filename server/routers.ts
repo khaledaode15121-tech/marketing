@@ -5,6 +5,7 @@ import { sdk } from "./_core/sdk";
 import {
   adminProcedure,
   managerProcedure,
+  protectedProcedure,
   publicProcedure,
   router,
 } from "./_core/trpc";
@@ -162,6 +163,21 @@ export const appRouter = router({
           address: existingUser?.address ?? null,
         };
       }),
+    updateAccount: protectedProcedure
+      .input(
+        z.object({
+          username: z.string().min(3).max(100).optional(),
+          password: z.string().min(5).max(200).optional(),
+        }).refine(input => input.username !== undefined || input.password !== undefined, {
+          message: "أدخل اسم مستخدم أو كلمة مرور جديدة",
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        db.updateOwnAccount(ctx.user.id, {
+          username: input.username,
+          passwordHash: input.password ? hashManagerPassword(input.password) : undefined,
+        })
+      ),
     logout: publicProcedure.mutation(async ({ ctx }) => {
       if (ctx.user) {
         await db.clearCart(ctx.user.id);
@@ -872,13 +888,21 @@ export const appRouter = router({
             phone: z.string().optional(),
             address: z.string().optional(),
             username: z.string().min(3).optional(),
-            password: z.string().min(1).optional(),
+            password: z.string().min(5).optional(),
             role: z.enum(["user", "admin", "manager"]).optional(),
             categoryIds: z.array(z.number().int().positive()).optional(),
           })
         )
-        .mutation(({ input }) => {
+        .mutation(async ({ input }) => {
           const { id, ...data } = input;
+          const current = await db.getUserById(id);
+          if (
+            (current?.role === "admin" || data.role === "admin") &&
+            data.username &&
+            data.username.toLowerCase() !== "admin"
+          ) {
+            throw new Error("اسم مستخدم المدير العام يجب أن يكون admin");
+          }
           return db.updateUserAdmin(id, data);
         }),
       delete: adminProcedure
@@ -891,7 +915,7 @@ export const appRouter = router({
         .input(
           z.object({
             username: z.string().min(3),
-            password: z.string().min(8),
+            password: z.string().min(5),
             name: z.string().min(1),
             email: z.string().email().optional(),
             phone: z.string().optional(),
@@ -910,7 +934,7 @@ export const appRouter = router({
           z.object({
             id: z.number().int().positive(),
             username: z.string().min(3).optional(),
-            password: z.string().min(8).optional(),
+            password: z.string().min(5).optional(),
             name: z.string().min(1).optional(),
             email: z.string().email().nullable().optional(),
             phone: z.string().nullable().optional(),

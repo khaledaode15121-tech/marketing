@@ -29,6 +29,7 @@ import {
   ShoppingBag,
   Star,
   Home,
+  Settings,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -37,6 +38,7 @@ import { Button } from "./ui/button";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "لوحة التحكم", path: "/admin/dashboard" },
+  { icon: Settings, label: "إعدادات الحساب", path: "/admin/account" },
   { icon: Home, label: "الصفحة الرئيسية", path: "/" },
 ];
 

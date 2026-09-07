@@ -588,6 +588,29 @@ export async function getAllUsersAdmin() {
   return db.select().from(users).orderBy(desc(users.createdAt));
 }
 
+export async function updateOwnAccount(
+  id: number,
+  data: { username?: string; passwordHash?: string }
+) {
+  const database = await getDb();
+  if (!database) throw new Error("Database not available");
+  const updateData: Record<string, unknown> = {};
+  if (data.username !== undefined) {
+    const username = data.username.trim().toLowerCase();
+    if (!/^[a-zA-Z0-9._-]{3,100}$/.test(username)) {
+      throw new Error("اسم المستخدم يجب أن يكون 3 أحرف على الأقل وبأحرف لاتينية أو أرقام");
+    }
+    const existing = await getUserByUsername(username);
+    if (existing && existing.id !== id) throw new Error("اسم المستخدم مستخدم مسبقًا");
+    updateData.username = username;
+  }
+  if (data.passwordHash !== undefined) updateData.passwordHash = data.passwordHash;
+  if (Object.keys(updateData).length > 0) {
+    await database.update(users).set(updateData).where(eq(users.id, id));
+  }
+  return getUserById(id);
+}
+
 export async function createUserAdmin(data: {
   name: string;
   email: string;

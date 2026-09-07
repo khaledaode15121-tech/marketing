@@ -263,6 +263,13 @@ export default function SiteHeader() {
                         الطلبات السابقة
                       </DropdownMenuItem>
                       <DropdownMenuItem
+                        onSelect={() => navigate("/account")}
+                        className="text-right"
+                      >
+                        <User className="ml-2 h-4 w-4" />
+                        إعدادات الحساب
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         onSelect={handleLogout}
                         className="text-right text-destructive"
                       >
