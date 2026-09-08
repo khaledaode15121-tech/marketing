@@ -138,7 +138,24 @@ async function ensureDatabaseSchemaCompatibility() {
       const tableChecks = [
         {
           table: "users",
-          columns: [["passwordEncrypted", "TEXT NULL"]],
+          columns: [
+            ["username", "VARCHAR(100) NULL"],
+            ["passwordHash", "VARCHAR(255) NULL"],
+            ["passwordEncrypted", "TEXT NULL"],
+            ["name", "TEXT NULL"],
+            ["email", "VARCHAR(320) NULL"],
+            ["phone", "VARCHAR(20) NULL"],
+            ["address", "TEXT NULL"],
+            ["loginMethod", "VARCHAR(64) NULL"],
+            ["token", "TEXT NULL"],
+            ["role", "ENUM('user','admin','manager') NOT NULL DEFAULT 'user'"],
+            ["createdAt", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"],
+            ["updatedAt", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"],
+            [
+              "lastSignedIn",
+              "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ],
+          ],
         },
         {
           table: "products",
