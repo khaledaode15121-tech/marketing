@@ -9,7 +9,16 @@ import {
 
 const KEY_LENGTH = 64;
 
+export function normalizeManagerUsername(username: string) {
+  return username.trim().toLowerCase();
+}
+
+export function normalizeManagerPassword(password: string) {
+  return password.trim();
+}
+
 export function hashPassword(password: string) {
+  password = normalizeManagerPassword(password);
   if (password.length < 5) {
     throw new Error("كلمة المرور يجب أن تكون 5 أحرف على الأقل");
   }
@@ -22,6 +31,7 @@ export function verifyManagerPassword(
   password: string,
   storedHash: string | null | undefined
 ) {
+  password = normalizeManagerPassword(password);
   if (!storedHash?.startsWith("scrypt:")) return false;
   const [, salt, expectedHex] = storedHash.split(":");
   if (!salt || !expectedHex) return false;

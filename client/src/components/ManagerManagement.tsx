@@ -163,7 +163,9 @@ export default function ManagerManagement() {
     setEditingId(manager.id);
     setForm({
       username: manager.username ?? "",
-      password: manager.password ?? "",
+      // Never preload an existing password. Enter a new value only when it
+      // should be changed; an empty value keeps the current hash untouched.
+      password: "",
       name: manager.name ?? "",
       selectedUserId: null,
       sectionIds,
@@ -237,7 +239,7 @@ export default function ManagerManagement() {
             <div>
               <Label>كلمة المرور</Label>
               <Input
-                type="text"
+                type="password"
                 value={form.password}
                 onChange={event =>
                   setForm({ ...form, password: event.target.value })
@@ -245,9 +247,11 @@ export default function ManagerManagement() {
                 minLength={5}
                 required={!form.selectedUserId}
                 placeholder={
-                  form.selectedUserId
-                    ? "سيتم إنشاء كلمة مرور تلقائية"
-                    : "أدخل كلمة المرور"
+                  editingId
+                    ? "اتركها فارغة للإبقاء على كلمة المرور الحالية"
+                    : form.selectedUserId
+                      ? "سيتم إنشاء كلمة مرور تلقائية"
+                      : "أدخل كلمة المرور"
                 }
               />
             </div>

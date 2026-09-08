@@ -17,6 +17,8 @@ import {
   encryptManagerPassword,
   hashPassword,
   hashManagerPassword,
+  normalizeManagerPassword,
+  normalizeManagerUsername,
   verifyPassword,
   verifyManagerPassword,
 } from "./_core/managerAuth";
@@ -165,11 +167,16 @@ export const appRouter = router({
         z.object({ username: z.string().min(3), password: z.string().min(1) })
       )
       .mutation(async ({ ctx, input }) => {
-        const manager = await db.getUserByUsername(input.username);
+        const manager = await db.getUserByUsername(
+          normalizeManagerUsername(input.username)
+        );
         if (
           !manager ||
           (manager.role !== "admin" && manager.role !== "manager") ||
-          !verifyManagerPassword(input.password, manager.passwordHash)
+          !verifyManagerPassword(
+            normalizeManagerPassword(input.password),
+            manager.passwordHash
+          )
         ) {
           throw new Error("اسم المستخدم أو كلمة المرور غير صحيحة");
         }
@@ -1020,9 +1027,11 @@ export const appRouter = router({
           const { id, password, ...data } = input;
           return db.updateManagerAdmin(id, {
             ...data,
-            passwordHash: password ? hashManagerPassword(password) : undefined,
+            passwordHash: password
+              ? hashManagerPassword(normalizeManagerPassword(password))
+              : undefined,
             passwordEncrypted: password
-              ? encryptManagerPassword(password)
+              ? encryptManagerPassword(normalizeManagerPassword(password))
               : undefined,
           });
         }),

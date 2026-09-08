@@ -34,6 +34,8 @@ import {
   decryptManagerPassword,
   encryptManagerPassword,
   hashManagerPassword,
+  normalizeManagerPassword,
+  normalizeManagerUsername,
 } from "./_core/managerAuth";
 import { eq, and, or, like, gte, lte, inArray, desc } from "drizzle-orm";
 
@@ -718,7 +720,7 @@ export async function updateUserAdmin(
   if (data.role !== undefined) values.role = data.role;
 
   if (data.username !== undefined) {
-    const username = data.username.trim();
+    const username = normalizeManagerUsername(data.username);
     if (!username) throw new Error("اسم المستخدم مطلوب");
     const existing = await getUserByUsername(username);
     if (existing && existing.id !== id) {
@@ -728,7 +730,7 @@ export async function updateUserAdmin(
   }
 
   if (data.password !== undefined) {
-    const password = data.password.trim();
+    const password = normalizeManagerPassword(data.password);
     if (!password) throw new Error("كلمة المرور غير صالحة");
     values.passwordHash = hashManagerPassword(password);
     values.passwordEncrypted = encryptManagerPassword(password);

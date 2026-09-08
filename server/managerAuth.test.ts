@@ -3,10 +3,23 @@ import {
   decryptManagerPassword,
   encryptManagerPassword,
   hashManagerPassword,
+  normalizeManagerPassword,
+  normalizeManagerUsername,
   verifyManagerPassword,
 } from "./_core/managerAuth";
 
 describe("manager password protection", () => {
+  it("normalizes manager credentials consistently", () => {
+    expect(normalizeManagerUsername("  Manager01 ")).toBe("manager01");
+    expect(normalizeManagerPassword("  NewPass123  ")).toBe("NewPass123");
+    expect(
+      verifyManagerPassword(
+        "  NewPass123  ",
+        hashManagerPassword("NewPass123")
+      )
+    ).toBe(true);
+  });
+
   it("encrypts and decrypts the authorized display value", () => {
     const password = "TestPass123";
     const encrypted = encryptManagerPassword(password);
