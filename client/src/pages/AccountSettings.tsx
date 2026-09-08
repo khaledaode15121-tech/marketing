@@ -3,7 +3,13 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -18,6 +24,7 @@ export default function AccountSettings() {
   useEffect(() => {
     if (!loading && !user) setLocation("/login");
     if (user?.username) setUsername(user.username);
+    if (user?.password) setPassword(user.password);
   }, [loading, setLocation, user]);
 
   const updateAccount = trpc.auth.updateAccount.useMutation({
@@ -43,21 +50,51 @@ export default function AccountSettings() {
       <Card className="mx-auto w-full max-w-lg shadow-lg">
         <CardHeader>
           <CardTitle>إعدادات الحساب</CardTitle>
-          <CardDescription>يمكنك تعديل بيانات حسابك فقط. لا يمكنك تعديل حساب مستخدم آخر.</CardDescription>
+          <CardDescription>
+            يمكنك رؤية وتعديل بيانات حسابك فقط. لا يمكنك تعديل حساب مستخدم آخر.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="account-username">اسم المستخدم</Label>
-              <Input id="account-username" value={username} onChange={event => setUsername(event.target.value)} placeholder="اسم المستخدم" minLength={3} />
+              <Input
+                id="account-username"
+                value={username}
+                onChange={event => setUsername(event.target.value)}
+                placeholder="اسم المستخدم"
+                minLength={3}
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="account-password">كلمة المرور الجديدة</Label>
-              <Input id="account-password" type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="اتركها فارغة دون تغيير" minLength={5} />
+              <Label htmlFor="account-password">كلمة المرور</Label>
+              <Input
+                id="account-password"
+                type="text"
+                value={password}
+                onChange={event => setPassword(event.target.value)}
+                placeholder="كلمة المرور"
+                minLength={5}
+                required
+              />
             </div>
             <div className="flex gap-3">
-              <Button type="submit" disabled={updateAccount.isPending}>حفظ التغييرات</Button>
-              <Button type="button" variant="outline" onClick={() => setLocation(user.role === "admin" || user.role === "manager" ? "/admin/dashboard" : "/")}>عودة</Button>
+              <Button type="submit" disabled={updateAccount.isPending}>
+                حفظ التغييرات
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setLocation(
+                    user.role === "admin" || user.role === "manager"
+                      ? "/admin/dashboard"
+                      : "/"
+                  )
+                }
+              >
+                عودة
+              </Button>
             </div>
           </form>
         </CardContent>

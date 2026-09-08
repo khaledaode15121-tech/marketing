@@ -30,7 +30,11 @@ import {
   cashTransactions,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
-import { hashManagerPassword } from "./_core/managerAuth";
+import {
+  decryptManagerPassword,
+  encryptManagerPassword,
+  hashManagerPassword,
+} from "./_core/managerAuth";
 import { eq, and, or, like, gte, lte, inArray, desc } from "drizzle-orm";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -131,6 +135,10 @@ async function ensureDatabaseSchemaCompatibility() {
 
       const tableChecks = [
         {
+          table: "users",
+          columns: [["passwordEncrypted", "TEXT NULL"]],
+        },
+        {
           table: "products",
           columns: [
             ["productCode", "VARCHAR(64) NULL"],
@@ -182,15 +190,24 @@ async function ensureDatabaseSchemaCompatibility() {
         {
           table: "orders",
           columns: [
-            ["paymentStatus", "ENUM('unpaid','paid','refunded') NOT NULL DEFAULT 'unpaid'"],
-            ["paymentMethod", "VARCHAR(100) NOT NULL DEFAULT 'الدفع عند الاستلام'"],
+            [
+              "paymentStatus",
+              "ENUM('unpaid','paid','refunded') NOT NULL DEFAULT 'unpaid'",
+            ],
+            [
+              "paymentMethod",
+              "VARCHAR(100) NOT NULL DEFAULT 'الدفع عند الاستلام'",
+            ],
             ["customerName", "TEXT NULL"],
             ["customerPhone", "VARCHAR(20) NULL"],
             ["shippingAddress", "TEXT NULL"],
             ["estimatedDeliveryMinutes", "INT NULL"],
             ["items", "JSON NULL"],
             ["createdAt", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"],
-            ["updatedAt", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"],
+            [
+              "updatedAt",
+              "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+            ],
           ],
         },
       ];
@@ -200,7 +217,7 @@ async function ensureDatabaseSchemaCompatibility() {
           table: "users",
           sql: `CREATE TABLE IF NOT EXISTS users (
             id INT NOT NULL AUTO_INCREMENT, openId VARCHAR(64) NOT NULL,
-            username VARCHAR(100) NULL, passwordHash VARCHAR(255) NULL,
+            username VARCHAR(100) NULL, passwordHash VARCHAR(255) NULL, passwordEncrypted TEXT NULL,
             name TEXT NULL, email VARCHAR(320) NULL, phone VARCHAR(20) NULL,
             address TEXT NULL, loginMethod VARCHAR(64) NULL, token TEXT NULL,
             role ENUM('user','admin','manager') NOT NULL DEFAULT 'user',
@@ -208,7 +225,7 @@ async function ensureDatabaseSchemaCompatibility() {
             updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             lastSignedIn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id), UNIQUE KEY uq_users_openId (openId), UNIQUE KEY uq_users_username (username)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
         },
         {
           table: "category",
@@ -219,7 +236,7 @@ async function ensureDatabaseSchemaCompatibility() {
             isActive BOOLEAN NOT NULL DEFAULT TRUE, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id), UNIQUE KEY uq_category_code (categoryCode), UNIQUE KEY uq_category_slug (slug)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
         },
         {
           table: "brand",
@@ -231,7 +248,7 @@ async function ensureDatabaseSchemaCompatibility() {
             createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id), UNIQUE KEY uq_brand_code (brandCode), UNIQUE KEY uq_brand_slug (slug)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
         },
         {
           table: "products",
@@ -247,7 +264,7 @@ async function ensureDatabaseSchemaCompatibility() {
             badge VARCHAR(100) NULL, badgeColor VARCHAR(50) NULL, color VARCHAR(100) NULL, size VARCHAR(100) NULL,
             createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id), UNIQUE KEY uq_products_code (productCode)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
         },
         {
           // The SQL dump uses the lowercase table name. Keep this explicit so
@@ -264,7 +281,7 @@ async function ensureDatabaseSchemaCompatibility() {
             PRIMARY KEY (\`id\`),
             KEY \`idx_cartitems_user\` (\`userId\`),
             KEY \`idx_cartitems_product\` (\`productId\`)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
         },
         {
           table: "managerCategoryAssignments",
@@ -277,7 +294,7 @@ async function ensureDatabaseSchemaCompatibility() {
             KEY \`idx_manager_category_manager\` (\`managerId\`),
             KEY \`idx_manager_category_category\` (\`categoryId\`),
             UNIQUE KEY \`uq_manager_category\` (\`managerId\`,\`categoryId\`)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
         },
         {
           table: "sales",
@@ -302,7 +319,7 @@ async function ensureDatabaseSchemaCompatibility() {
             KEY \`idx_sales_manager\` (\`managerId\`),
             KEY \`idx_sales_category\` (\`categoryId\`),
             KEY \`idx_sales_date\` (\`saleDate\`)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
         },
         {
           table: "purchases",
@@ -323,7 +340,7 @@ async function ensureDatabaseSchemaCompatibility() {
             KEY \`idx_purchases_manager\` (\`managerId\`),
             KEY \`idx_purchases_category\` (\`categoryId\`),
             KEY \`idx_purchases_date\` (\`purchaseDate\`)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
         },
         {
           table: "expenses",
@@ -340,7 +357,7 @@ async function ensureDatabaseSchemaCompatibility() {
             PRIMARY KEY (\`id\`),
             KEY \`idx_expenses_manager\` (\`managerId\`),
             KEY \`idx_expenses_date\` (\`expenseDate\`)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
         },
         {
           table: "cashTransactions",
@@ -359,8 +376,8 @@ async function ensureDatabaseSchemaCompatibility() {
             KEY \`idx_cash_manager\` (\`managerId\`),
             KEY \`idx_cash_source\` (\`sourceType\`,\`sourceId\`),
             KEY \`idx_cash_date\` (\`transactionDate\`)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
-        }
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+        },
       ];
 
       // Create missing feature tables before inspecting their columns. This
@@ -376,9 +393,13 @@ async function ensureDatabaseSchemaCompatibility() {
       }
 
       for (const { table, columns } of tableChecks) {
-        const [rows] = await connection.query<RowDataPacket[]>(`SHOW COLUMNS FROM \`${table}\``);
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SHOW COLUMNS FROM \`${table}\``
+        );
         const existingFields = new Set(rows.map(row => row.Field));
-        const missingColumns = columns.filter(([field]) => !existingFields.has(field));
+        const missingColumns = columns.filter(
+          ([field]) => !existingFields.has(field)
+        );
 
         if (missingColumns.length === 0) continue;
 
@@ -566,6 +587,7 @@ export async function updateUserById(
       | "role"
       | "token"
       | "passwordHash"
+      | "passwordEncrypted"
     >
   >
 ) {
@@ -586,12 +608,17 @@ export async function getAllUsersAdmin() {
     return [];
   }
 
-  return db.select().from(users).orderBy(desc(users.createdAt));
+  const rows = await db.select().from(users).orderBy(desc(users.createdAt));
+  return rows.map(user => ({
+    ...user,
+    passwordHash: undefined,
+    passwordEncrypted: undefined,
+  }));
 }
 
 export async function updateOwnAccount(
   id: number,
-  data: { username?: string; passwordHash?: string }
+  data: { username?: string; passwordHash?: string; passwordEncrypted?: string }
 ) {
   const database = await getDb();
   if (!database) throw new Error("Database not available");
@@ -599,13 +626,19 @@ export async function updateOwnAccount(
   if (data.username !== undefined) {
     const username = data.username.trim().toLowerCase();
     if (!/^[a-zA-Z0-9._-]{3,100}$/.test(username)) {
-      throw new Error("اسم المستخدم يجب أن يكون 3 أحرف على الأقل وبأحرف لاتينية أو أرقام");
+      throw new Error(
+        "اسم المستخدم يجب أن يكون 3 أحرف على الأقل وبأحرف لاتينية أو أرقام"
+      );
     }
     const existing = await getUserByUsername(username);
-    if (existing && existing.id !== id) throw new Error("اسم المستخدم مستخدم مسبقًا");
+    if (existing && existing.id !== id)
+      throw new Error("اسم المستخدم مستخدم مسبقًا");
     updateData.username = username;
   }
-  if (data.passwordHash !== undefined) updateData.passwordHash = data.passwordHash;
+  if (data.passwordHash !== undefined)
+    updateData.passwordHash = data.passwordHash;
+  if (data.passwordEncrypted !== undefined)
+    updateData.passwordEncrypted = data.passwordEncrypted;
   if (Object.keys(updateData).length > 0) {
     await database.update(users).set(updateData).where(eq(users.id, id));
   }
@@ -667,7 +700,15 @@ export async function updateUserAdmin(
   const values: Partial<
     Pick<
       InsertUser,
-      "name" | "email" | "phone" | "address" | "role" | "openId" | "username" | "passwordHash"
+      | "name"
+      | "email"
+      | "phone"
+      | "address"
+      | "role"
+      | "openId"
+      | "username"
+      | "passwordHash"
+      | "passwordEncrypted"
     >
   > = {};
 
@@ -690,6 +731,7 @@ export async function updateUserAdmin(
     const password = data.password.trim();
     if (!password) throw new Error("كلمة المرور غير صالحة");
     values.passwordHash = hashManagerPassword(password);
+    values.passwordEncrypted = encryptManagerPassword(password);
   }
 
   if (data.email !== undefined) {
@@ -706,7 +748,10 @@ export async function updateUserAdmin(
     await db.update(users).set(values).where(eq(users.id, id));
   }
 
-  if ((data.role === "manager" || data.role === "admin") && Array.isArray(data.categoryIds)) {
+  if (
+    (data.role === "manager" || data.role === "admin") &&
+    Array.isArray(data.categoryIds)
+  ) {
     await replaceManagerCategoryAssignments(id, data.categoryIds);
   }
 
@@ -1074,12 +1119,17 @@ export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
   const allowedCategoryIds = await getManagerCategoryIds(managerId);
   if (allowedCategoryIds.length === 0) return [];
 
-  const allOrders = await db.select().from(orders).orderBy(desc(orders.createdAt));
+  const allOrders = await db
+    .select()
+    .from(orders)
+    .orderBy(desc(orders.createdAt));
   const productIds = Array.from(
     new Set(
       allOrders.flatMap(order =>
         Array.isArray(order.items)
-          ? order.items.map(item => Number(item?.productId)).filter(id => Number.isFinite(id))
+          ? order.items
+              .map(item => Number(item?.productId))
+              .filter(id => Number.isFinite(id))
           : []
       )
     )
@@ -1094,8 +1144,10 @@ export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
 
   const allowedProductIds = new Set(
     relatedProducts
-      .filter(product =>
-        product.categoryId != null && allowedCategoryIds.includes(Number(product.categoryId))
+      .filter(
+        product =>
+          product.categoryId != null &&
+          allowedCategoryIds.includes(Number(product.categoryId))
       )
       .map(product => product.id)
   );
@@ -1699,7 +1751,9 @@ export async function getRentalBookingsForManager(
     .leftJoin(users, eq(rentalBookings.userId, users.id))
     .orderBy(desc(rentalBookings.rentalDate));
 
-  const ids = rows.map(row => row.productId).filter((id): id is number => Number.isFinite(id));
+  const ids = rows
+    .map(row => row.productId)
+    .filter((id): id is number => Number.isFinite(id));
   if (ids.length === 0) return [];
 
   const productRows = await db
@@ -1708,7 +1762,11 @@ export async function getRentalBookingsForManager(
     .where(inArray(products.id, ids));
   const allowedProductIds = new Set(
     productRows
-      .filter(product => product.categoryId != null && allowedCategoryIds.includes(Number(product.categoryId)))
+      .filter(
+        product =>
+          product.categoryId != null &&
+          allowedCategoryIds.includes(Number(product.categoryId))
+      )
       .map(product => product.id)
   );
 
@@ -1913,7 +1971,6 @@ export async function getActiveCategoriesWithImages() {
     .orderBy(desc(categoryTable.id));
 }
 
-
 export async function getAllCategories() {
   const db = await getDb();
   if (!db) return [];
@@ -1933,14 +1990,18 @@ export function buildUniqueValue(
   };
 
   const source = String(value ?? "").trim();
-  const base = source ? source.replace(/[^a-zA-Z0-9]+/g, config.separator) : fallback;
+  const base = source
+    ? source.replace(/[^a-zA-Z0-9]+/g, config.separator)
+    : fallback;
 
   const normalized = base
     .replace(new RegExp(`^${config.separator}+|${config.separator}+$`, "g"), "")
     .replace(new RegExp(`${config.separator}{2,}`, "g"), config.separator);
 
   const candidate =
-    config.caseMode === "lower" ? normalized.toLowerCase() : normalized.toUpperCase();
+    config.caseMode === "lower"
+      ? normalized.toLowerCase()
+      : normalized.toUpperCase();
 
   return candidate || fallback;
 }
@@ -1973,7 +2034,9 @@ export async function createCategoryAdmin(data: {
   if (!db) throw new Error("Database not available");
   const database = db;
 
-  async function tryInsertCategory(existingRows: Array<{ categoryCode: string | null; slug: string | null }>) {
+  async function tryInsertCategory(
+    existingRows: Array<{ categoryCode: string | null; slug: string | null }>
+  ) {
     const usedCategoryCodes = new Set(
       existingRows.map(item => item.categoryCode).filter(Boolean) as string[]
     );
@@ -2025,17 +2088,24 @@ export async function createCategoryAdmin(data: {
 
   try {
     const existingCategoryRows = await database
-      .select({ categoryCode: categoryTable.categoryCode, slug: categoryTable.slug })
+      .select({
+        categoryCode: categoryTable.categoryCode,
+        slug: categoryTable.slug,
+      })
       .from(categoryTable);
     return await tryInsertCategory(existingCategoryRows);
   } catch (error: any) {
-    const message = error && error.message ? String(error.message) : String(error);
+    const message =
+      error && error.message ? String(error.message) : String(error);
     if (!/Duplicate entry|1062|unique/i.test(message)) {
       throw error;
     }
 
     const existingCategoryRows = await database
-      .select({ categoryCode: categoryTable.categoryCode, slug: categoryTable.slug })
+      .select({
+        categoryCode: categoryTable.categoryCode,
+        slug: categoryTable.slug,
+      })
       .from(categoryTable);
     return await tryInsertCategory(existingCategoryRows);
   }
@@ -2148,7 +2218,10 @@ export async function getBrandsForManager(managerId: number, isAdmin: boolean) {
   const categoryIds = await getManagerCategoryIds(managerId);
   const allowedSections = new Set(
     (await getAllCategories())
-      .filter(category => categoryIds.includes(category.id) && category.sectionId != null)
+      .filter(
+        category =>
+          categoryIds.includes(category.id) && category.sectionId != null
+      )
       .map(category => Number(category.sectionId))
   );
 
@@ -2172,7 +2245,9 @@ export async function createBrandAdmin(data: {
   if (!db) throw new Error("Database not available");
   const database = db;
 
-  async function tryInsertBrand(existingRows: Array<{ brandCode: string | null; slug: string | null }>) {
+  async function tryInsertBrand(
+    existingRows: Array<{ brandCode: string | null; slug: string | null }>
+  ) {
     const usedBrandCodes = new Set(
       existingRows.map(item => item.brandCode).filter(Boolean) as string[]
     );
@@ -2229,7 +2304,8 @@ export async function createBrandAdmin(data: {
       .from(brandTable);
     return await tryInsertBrand(existingBrands);
   } catch (error: any) {
-    const message = error && error.message ? String(error.message) : String(error);
+    const message =
+      error && error.message ? String(error.message) : String(error);
     if (!/Duplicate entry|1062|unique/i.test(message)) {
       throw error;
     }
@@ -2245,9 +2321,14 @@ export async function updateBrandAdmin(id: number, data: Partial<InsertBrand>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const sanitizedData: Partial<InsertBrand> = { ...(data as Partial<InsertBrand>) } as any;
+  const sanitizedData: Partial<InsertBrand> = {
+    ...(data as Partial<InsertBrand>),
+  } as any;
   if (Object.prototype.hasOwnProperty.call(sanitizedData, "managerId")) {
-    sanitizedData.managerId = typeof (sanitizedData as any).managerId === "number" ? (sanitizedData as any).managerId : null;
+    sanitizedData.managerId =
+      typeof (sanitizedData as any).managerId === "number"
+        ? (sanitizedData as any).managerId
+        : null;
   }
 
   await db.update(brandTable).set(sanitizedData).where(eq(brandTable.id, id));
@@ -2268,7 +2349,9 @@ export async function deleteBrandAdmin(id: number) {
 }
 
 // ─── Welcome Messages Functions ───────────────────────────────────────────────
-async function ensureWelcomeMessagesTable(db: Awaited<ReturnType<typeof getDb>>) {
+async function ensureWelcomeMessagesTable(
+  db: Awaited<ReturnType<typeof getDb>>
+) {
   if (!db) return;
   await db.execute(`
     CREATE TABLE IF NOT EXISTS \`welcomeMessages\` (
@@ -2288,14 +2371,20 @@ export async function getActiveWelcomeMessages() {
   const db = await getDb();
   if (!db) return [];
   await ensureWelcomeMessagesTable(db);
-  return db.select().from(welcomeMessages).where(eq(welcomeMessages.isActive, true));
+  return db
+    .select()
+    .from(welcomeMessages)
+    .where(eq(welcomeMessages.isActive, true));
 }
 
 export async function getAllWelcomeMessagesAdmin() {
   const db = await getDb();
   if (!db) return [];
   await ensureWelcomeMessagesTable(db);
-  return db.select().from(welcomeMessages).orderBy(desc(welcomeMessages.createdAt));
+  return db
+    .select()
+    .from(welcomeMessages)
+    .orderBy(desc(welcomeMessages.createdAt));
 }
 
 export async function createWelcomeMessageAdmin(data: {
@@ -2484,7 +2573,9 @@ export async function getDashboardStatsForUser(
     });
 
     const allReviews = await db.select().from(reviews);
-    const productIdSet = new Set((filteredProducts ?? []).map((p: any) => Number(p.id)));
+    const productIdSet = new Set(
+      (filteredProducts ?? []).map((p: any) => Number(p.id))
+    );
     const filteredReviews = (allReviews ?? []).filter((r: any) =>
       productIdSet.has(Number(r.productId))
     );
@@ -2507,7 +2598,10 @@ export async function getDashboardStatsForUser(
     try {
       allOrders = await db.select().from(orders);
     } catch (error) {
-      console.warn("[Dashboard] Unable to read orders for scoped manager stats:", error);
+      console.warn(
+        "[Dashboard] Unable to read orders for scoped manager stats:",
+        error
+      );
     }
 
     for (const ord of allOrders ?? []) {
@@ -2535,7 +2629,9 @@ export async function getDashboardStatsForUser(
 
     return {
       ...scopedStats,
-      ...(isAdmin ? { totalUsers: (await db.select().from(users)).length } : {}),
+      ...(isAdmin
+        ? { totalUsers: (await db.select().from(users)).length }
+        : {}),
     };
   } catch (error) {
     console.error("[Database] Failed to get dashboard stats for user:", error);
@@ -2958,6 +3054,8 @@ export async function getManagersAdmin() {
     managerRows.map(async manager => ({
       ...manager,
       passwordHash: undefined,
+      passwordEncrypted: undefined,
+      password: decryptManagerPassword(manager.passwordEncrypted),
       categoryIds: await getManagerCategoryIds(manager.id),
     }))
   );
@@ -2966,6 +3064,7 @@ export async function getManagersAdmin() {
 export async function createManagerAdmin(data: {
   username: string;
   passwordHash: string;
+  passwordEncrypted?: string;
   name: string;
   email?: string | null;
   phone?: string | null;
@@ -2986,6 +3085,7 @@ export async function createManagerAdmin(data: {
     openId,
     username,
     passwordHash: data.passwordHash,
+    passwordEncrypted: data.passwordEncrypted ?? null,
     name: data.name.trim(),
     email: data.email?.trim().toLowerCase() || null,
     phone: data.phone?.trim() || null,
@@ -3008,6 +3108,7 @@ export async function updateManagerAdmin(
   data: {
     username?: string;
     passwordHash?: string;
+    passwordEncrypted?: string;
     name?: string;
     email?: string | null;
     phone?: string | null;
@@ -3028,6 +3129,8 @@ export async function updateManagerAdmin(
     updateData.username = data.username.trim().toLowerCase();
   if (data.passwordHash !== undefined)
     updateData.passwordHash = data.passwordHash;
+  if (data.passwordEncrypted !== undefined)
+    updateData.passwordEncrypted = data.passwordEncrypted;
   if (data.name !== undefined) updateData.name = data.name.trim();
   if (data.email !== undefined)
     updateData.email = data.email?.trim().toLowerCase() || null;

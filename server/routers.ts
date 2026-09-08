@@ -13,6 +13,8 @@ import { z } from "zod";
 import * as db from "./db";
 import { sendRentalWhatsAppNotification } from "./twilio";
 import {
+  decryptManagerPassword,
+  encryptManagerPassword,
   hashPassword,
   hashManagerPassword,
   verifyPassword,
@@ -32,10 +34,25 @@ export const appRouter = router({
       if (opts.ctx.user.role === "manager") {
         return {
           ...opts.ctx.user,
+          passwordHash: undefined,
+          passwordEncrypted: undefined,
+          password: decryptManagerPassword(opts.ctx.user.passwordEncrypted),
           categoryIds: await db.getManagerCategoryIds(opts.ctx.user.id),
         };
       }
-      return opts.ctx.user;
+      if (opts.ctx.user.role === "admin") {
+        return {
+          ...opts.ctx.user,
+          passwordHash: undefined,
+          passwordEncrypted: undefined,
+          password: decryptManagerPassword(opts.ctx.user.passwordEncrypted),
+        };
+      }
+      return {
+        ...opts.ctx.user,
+        passwordHash: undefined,
+        passwordEncrypted: undefined,
+      };
     }),
     localLogin: publicProcedure
       .input(
@@ -120,10 +137,13 @@ export const appRouter = router({
           );
         }
 
-        const sessionToken = await sdk.createSessionToken(`user:${user.openId}`, {
-          name: user.name || user.email || "User",
-          expiresInMs: ONE_YEAR_MS,
-        });
+        const sessionToken = await sdk.createSessionToken(
+          `user:${user.openId}`,
+          {
+            name: user.name || user.email || "User",
+            expiresInMs: ONE_YEAR_MS,
+          }
+        );
 
         if (user.id > 0) {
           await db.updateUserById(user.id, { token: sessionToken });
@@ -153,10 +173,13 @@ export const appRouter = router({
         ) {
           throw new Error("اسم المستخدم أو كلمة المرور غير صحيحة");
         }
-        const sessionToken = await sdk.createSessionToken(`manager:${manager.openId}`, {
-          name: manager.name || manager.username || "مدير",
-          expiresInMs: ONE_YEAR_MS,
-        });
+        const sessionToken = await sdk.createSessionToken(
+          `manager:${manager.openId}`,
+          {
+            name: manager.name || manager.username || "مدير",
+            expiresInMs: ONE_YEAR_MS,
+          }
+        );
         await db.updateUserById(manager.id, {
           token: sessionToken,
           lastSignedIn: new Date(),
@@ -183,17 +206,28 @@ export const appRouter = router({
       }),
     updateAccount: protectedProcedure
       .input(
-        z.object({
-          username: z.string().min(3).max(100).optional(),
-          password: z.string().min(5).max(200).optional(),
-        }).refine(input => input.username !== undefined || input.password !== undefined, {
-          message: "أدخل اسم مستخدم أو كلمة مرور جديدة",
-        })
+        z
+          .object({
+            username: z.string().min(3).max(100).optional(),
+            password: z.string().min(5).max(200).optional(),
+          })
+          .refine(
+            input =>
+              input.username !== undefined || input.password !== undefined,
+            {
+              message: "أدخل اسم مستخدم أو كلمة مرور جديدة",
+            }
+          )
       )
       .mutation(({ ctx, input }) =>
         db.updateOwnAccount(ctx.user.id, {
           username: input.username,
-          passwordHash: input.password ? hashManagerPassword(input.password) : undefined,
+          passwordHash: input.password
+            ? hashManagerPassword(input.password)
+            : undefined,
+          passwordEncrypted: input.password
+            ? encryptManagerPassword(input.password)
+            : undefined,
         })
       ),
     logout: publicProcedure.mutation(async ({ ctx }) => {
@@ -546,7 +580,9 @@ export const appRouter = router({
               ctx.user.id,
               false
             );
-            if (!allowedRequests.some(request => request.id === input.requestId)) {
+            if (
+              !allowedRequests.some(request => request.id === input.requestId)
+            ) {
               throw new Error("لا تملك صلاحية إدارة هذا الطلب");
             }
             const result = await db.approveRentalRequest(
@@ -573,31 +609,33 @@ export const appRouter = router({
             }
             return result;
           }),
-        reject: managerProcedure.input(z.number()).mutation(async ({ ctx, input }) => {
-          const allowedRequests = await db.getRentalRequestsForManager(
-            ctx.user.id,
-            false
-          );
-          if (!allowedRequests.some(request => request.id === input)) {
-            throw new Error("لا تملك صلاحية إدارة هذا الطلب");
-          }
-          const result = await db.rejectRentalRequest(input);
-          if (result) {
-            const user = await db.getUserById(result.userId);
-            void sendRentalWhatsAppNotification({
-              phone: user?.phone,
-              event: "unavailable",
-              productName: result.productName,
-              rentalDate: result.rentalDate,
-            }).catch(error =>
-              console.warn(
-                "[Twilio] Rental rejection notification failed",
-                error
-              )
+        reject: managerProcedure
+          .input(z.number())
+          .mutation(async ({ ctx, input }) => {
+            const allowedRequests = await db.getRentalRequestsForManager(
+              ctx.user.id,
+              false
             );
-          }
-          return result;
-        }),
+            if (!allowedRequests.some(request => request.id === input)) {
+              throw new Error("لا تملك صلاحية إدارة هذا الطلب");
+            }
+            const result = await db.rejectRentalRequest(input);
+            if (result) {
+              const user = await db.getUserById(result.userId);
+              void sendRentalWhatsAppNotification({
+                phone: user?.phone,
+                event: "unavailable",
+                productName: result.productName,
+                rentalDate: result.rentalDate,
+              }).catch(error =>
+                console.warn(
+                  "[Twilio] Rental rejection notification failed",
+                  error
+                )
+              );
+            }
+            return result;
+          }),
       }),
       bookings: router({
         list: managerProcedure.query(({ ctx }) =>
@@ -610,32 +648,39 @@ export const appRouter = router({
               ctx.user.id,
               false
             );
-            if (!allowedBookings.some(booking => booking.id === input.bookingId)) {
+            if (
+              !allowedBookings.some(booking => booking.id === input.bookingId)
+            ) {
               throw new Error("لا تملك صلاحية إدارة هذا الحجز");
             }
-            return db.updateRentalBookingPayments(input.bookingId, input.payments);
+            return db.updateRentalBookingPayments(
+              input.bookingId,
+              input.payments
+            );
           }),
-        return: managerProcedure.input(z.number()).mutation(async ({ ctx, input }) => {
-          const allowedBookings = await db.getRentalBookingsForManager(
-            ctx.user.id,
-            false
-          );
-          if (!allowedBookings.some(booking => booking.id === input)) {
-            throw new Error("لا تملك صلاحية إدارة هذا الحجز");
-          }
-          const booking = await db.returnRentalBooking(input);
-          const user = await db.getUserById(booking.userId);
-          const product = await db.getProductById(booking.productId);
-          void sendRentalWhatsAppNotification({
-            phone: user?.phone,
-            event: "returned",
-            productName: product?.name,
-            rentalDate: booking.rentalDate,
-          }).catch(error =>
-            console.warn("[Twilio] Rental return notification failed", error)
-          );
-          return booking;
-        }),
+        return: managerProcedure
+          .input(z.number())
+          .mutation(async ({ ctx, input }) => {
+            const allowedBookings = await db.getRentalBookingsForManager(
+              ctx.user.id,
+              false
+            );
+            if (!allowedBookings.some(booking => booking.id === input)) {
+              throw new Error("لا تملك صلاحية إدارة هذا الحجز");
+            }
+            const booking = await db.returnRentalBooking(input);
+            const user = await db.getUserById(booking.userId);
+            const product = await db.getProductById(booking.productId);
+            void sendRentalWhatsAppNotification({
+              phone: user?.phone,
+              event: "returned",
+              productName: product?.name,
+              rentalDate: booking.rentalDate,
+            }).catch(error =>
+              console.warn("[Twilio] Rental return notification failed", error)
+            );
+            return booking;
+          }),
       }),
     }),
     products: router({
@@ -716,7 +761,10 @@ export const appRouter = router({
         .mutation(async ({ ctx, input }) => {
           const existing = await db.getProductById(input.id);
           if (!existing) throw new Error("المنتج غير موجود");
-          await db.assertManagerCategoryAccess(ctx.user.id, existing.categoryId);
+          await db.assertManagerCategoryAccess(
+            ctx.user.id,
+            existing.categoryId
+          );
           return db.updateProductAdmin(input.id, input);
         }),
       delete: managerProcedure
@@ -724,7 +772,10 @@ export const appRouter = router({
         .mutation(async ({ ctx, input }) => {
           const existing = await db.getProductById(input);
           if (!existing) throw new Error("المنتج غير موجود");
-          await db.assertManagerCategoryAccess(ctx.user.id, existing.categoryId);
+          await db.assertManagerCategoryAccess(
+            ctx.user.id,
+            existing.categoryId
+          );
           return db.deleteProductAdmin(input);
         }),
     }),
@@ -813,7 +864,8 @@ export const appRouter = router({
         .mutation(({ input }) => {
           const sanitized = {
             ...input,
-            managerId: typeof input.managerId === "number" ? input.managerId : null,
+            managerId:
+              typeof input.managerId === "number" ? input.managerId : null,
           } as typeof input;
           return db.createBrandAdmin(sanitized);
         }),
@@ -921,7 +973,10 @@ export const appRouter = router({
           ) {
             throw new Error("اسم مستخدم المدير العام يجب أن يكون admin");
           }
-          return db.updateUserAdmin(id, data);
+          return db.updateUserAdmin(id, {
+            ...data,
+            password: data.password,
+          });
         }),
       delete: adminProcedure
         .input(z.number())
@@ -945,6 +1000,7 @@ export const appRouter = router({
           db.createManagerAdmin({
             ...input,
             passwordHash: hashManagerPassword(input.password),
+            passwordEncrypted: encryptManagerPassword(input.password),
           })
         ),
       update: adminProcedure
@@ -965,6 +1021,9 @@ export const appRouter = router({
           return db.updateManagerAdmin(id, {
             ...data,
             passwordHash: password ? hashManagerPassword(password) : undefined,
+            passwordEncrypted: password
+              ? encryptManagerPassword(password)
+              : undefined,
           });
         }),
       delete: adminProcedure

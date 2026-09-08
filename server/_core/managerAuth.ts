@@ -1,4 +1,11 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+  scryptSync,
+  timingSafeEqual,
+} from "node:crypto";
 
 const KEY_LENGTH = 64;
 
@@ -31,3 +38,43 @@ export function verifyManagerPassword(
 
 export const hashManagerPassword = hashPassword;
 export const verifyPassword = verifyManagerPassword;
+
+const ENCRYPTION_VERSION = "aes256gcm:v1";
+
+function getEncryptionKey() {
+  return createHash("sha256")
+    .update(process.env.JWT_SECRET || "local-manager-password-key")
+    .digest();
+}
+
+/** Stores a reversible, encrypted copy only so authorized managers can view their password. */
+export function encryptManagerPassword(password: string) {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", getEncryptionKey(), iv);
+  const ciphertext = Buffer.concat([
+    cipher.update(password, "utf8"),
+    cipher.final(),
+  ]);
+  const tag = cipher.getAuthTag();
+  return `${ENCRYPTION_VERSION}:${iv.toString("hex")}:${tag.toString("hex")}:${ciphertext.toString("hex")}`;
+}
+
+export function decryptManagerPassword(value: string | null | undefined) {
+  if (!value?.startsWith(`${ENCRYPTION_VERSION}:`)) return null;
+  const [, , ivHex, tagHex, ciphertextHex] = value.split(":");
+  if (!ivHex || !tagHex || !ciphertextHex) return null;
+  try {
+    const decipher = createDecipheriv(
+      "aes-256-gcm",
+      getEncryptionKey(),
+      Buffer.from(ivHex, "hex")
+    );
+    decipher.setAuthTag(Buffer.from(tagHex, "hex"));
+    return Buffer.concat([
+      decipher.update(Buffer.from(ciphertextHex, "hex")),
+      decipher.final(),
+    ]).toString("utf8");
+  } catch {
+    return null;
+  }
+}

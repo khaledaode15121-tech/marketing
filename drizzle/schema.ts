@@ -26,6 +26,7 @@ export const users = mysqlTable("users", {
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   username: varchar("username", { length: 100 }).unique(),
   passwordHash: varchar("passwordHash", { length: 255 }),
+  passwordEncrypted: text("passwordEncrypted"),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 20 }),

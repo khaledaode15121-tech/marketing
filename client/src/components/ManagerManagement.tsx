@@ -87,8 +87,10 @@ export default function ManagerManagement() {
     return Array.from(
       new Set(
         (categories.data ?? [])
-          .filter(category =>
-            typeof category.sectionId === "number" && selected.has(category.sectionId)
+          .filter(
+            category =>
+              typeof category.sectionId === "number" &&
+              selected.has(category.sectionId)
           )
           .map(category => category.id)
       )
@@ -120,8 +122,13 @@ export default function ManagerManagement() {
     }
 
     if (form.selectedUserId) {
-      const selectedUser = (users.data ?? []).find(u => u.id === form.selectedUserId);
-      const username = form.username.trim() || selectedUser?.email?.split("@")[0] || `manager-${form.selectedUserId}`;
+      const selectedUser = (users.data ?? []).find(
+        u => u.id === form.selectedUserId
+      );
+      const username =
+        form.username.trim() ||
+        selectedUser?.email?.split("@")[0] ||
+        `manager-${form.selectedUserId}`;
       const generatedPassword = form.password || username;
       promoteUser.mutate({
         id: form.selectedUserId,
@@ -156,7 +163,7 @@ export default function ManagerManagement() {
     setEditingId(manager.id);
     setForm({
       username: manager.username ?? "",
-      password: "",
+      password: manager.password ?? "",
       name: manager.name ?? "",
       selectedUserId: null,
       sectionIds,
@@ -172,26 +179,34 @@ export default function ManagerManagement() {
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className="grid gap-4 md:grid-cols-3">
-              <div>
-              <Label>اختر مستخدماً من قائمة المستخدمين لتعديل صلاحياته (أو اتركه فارغاً لإنشاء مدير جديد)</Label>
+            <div>
+              <Label>
+                اختر مستخدماً من قائمة المستخدمين لتعديل صلاحياته (أو اتركه
+                فارغاً لإنشاء مدير جديد)
+              </Label>
               <select
                 value={form.selectedUserId ?? ""}
                 onChange={e => {
                   const id = e.target.value ? Number(e.target.value) : null;
-                  const selected = (users.data ?? []).find(u => u.id === id) ?? null;
+                  const selected =
+                    (users.data ?? []).find(u => u.id === id) ?? null;
                   setForm(prev => ({
                     ...prev,
                     selectedUserId: id,
                     name: selected ? selected.name || "" : prev.name,
                     // if selecting existing user, pref-fill username but allow override
-                    username: selected ? selected.email?.split("@")[0] || prev.username : prev.username,
+                    username: selected
+                      ? selected.email?.split("@")[0] || prev.username
+                      : prev.username,
                   }));
                 }}
                 className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm"
               >
                 <option value="">-- اختر مستخدماً --</option>
                 {(users.data ?? []).map((u: any) => (
-                  <option key={u.id} value={u.id}>{u.name} — {u.email}</option>
+                  <option key={u.id} value={u.id}>
+                    {u.name} — {u.email}
+                  </option>
                 ))}
               </select>
             </div>
@@ -222,14 +237,18 @@ export default function ManagerManagement() {
             <div>
               <Label>كلمة المرور</Label>
               <Input
-                type="password"
+                type="text"
                 value={form.password}
                 onChange={event =>
                   setForm({ ...form, password: event.target.value })
                 }
                 minLength={5}
                 required={!form.selectedUserId}
-                placeholder={form.selectedUserId ? "سيتم إنشاء كلمة مرور تلقائية" : "********"}
+                placeholder={
+                  form.selectedUserId
+                    ? "سيتم إنشاء كلمة مرور تلقائية"
+                    : "أدخل كلمة المرور"
+                }
               />
             </div>
             <div className="md:col-span-3">
@@ -251,9 +270,19 @@ export default function ManagerManagement() {
             </div>
             <div className="md:col-span-3">
               <div className="flex gap-2">
-                <Button disabled={create.isPending || update.isPending || promoteUser.isPending}>
+                <Button
+                  disabled={
+                    create.isPending ||
+                    update.isPending ||
+                    promoteUser.isPending
+                  }
+                >
                   <Plus className="ml-1 h-4 w-4" />
-                  {editingId ? "حفظ التعديلات" : form.selectedUserId ? "تعديل صلاحيات المستخدم" : "إنشاء حساب المدير"}
+                  {editingId
+                    ? "حفظ التعديلات"
+                    : form.selectedUserId
+                      ? "تعديل صلاحيات المستخدم"
+                      : "إنشاء حساب المدير"}
                 </Button>
                 {editingId && (
                   <Button
@@ -265,9 +294,9 @@ export default function ManagerManagement() {
                         username: "",
                         password: "",
                         name: "",
-                      selectedUserId: null,
-                      sectionIds: [],
-                    });
+                        selectedUserId: null,
+                        sectionIds: [],
+                      });
                     }}
                   >
                     إلغاء
@@ -298,13 +327,26 @@ export default function ManagerManagement() {
                   {Array.from(
                     new Set(
                       (categories.data ?? [])
-                        .filter(category => (manager.categoryIds ?? []).includes(category.id))
+                        .filter(category =>
+                          (manager.categoryIds ?? []).includes(category.id)
+                        )
                         .map(category => category.sectionId)
                         .filter((id): id is number => typeof id === "number")
-                        .map(sectionId => sections.data?.find(section => section.id === sectionId)?.name)
+                        .map(
+                          sectionId =>
+                            sections.data?.find(
+                              section => section.id === sectionId
+                            )?.name
+                        )
                         .filter((name): name is string => Boolean(name))
                     )
                   ).join("، ") || "غير محدد"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  كلمة المرور:{" "}
+                  <span className="font-medium text-foreground">
+                    {manager.password || "غير متاحة، عيّن كلمة مرور جديدة"}
+                  </span>
                 </p>
               </div>
               <div className="flex gap-2">
