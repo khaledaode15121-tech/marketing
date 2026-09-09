@@ -3089,6 +3089,7 @@ export async function createManagerAdmin(data: {
   phone?: string | null;
   role?: "admin" | "manager";
   categoryIds?: number[];
+  sectionIds?: number[];
 }) {
   const database = await getDb();
   if (!database) throw new Error("Database not available");
@@ -3114,6 +3115,19 @@ export async function createManagerAdmin(data: {
   const id = extractInsertId(result);
   if (!id) throw new Error("تعذر إنشاء حساب المدير");
   await replaceManagerCategoryAssignments(id, data.categoryIds ?? []);
+  const sectionIds = Array.from(
+    new Set(
+      (data.sectionIds ?? []).filter(
+        sectionId => Number.isInteger(sectionId) && sectionId > 0
+      )
+    )
+  );
+  if (sectionIds.length > 0) {
+    await database
+      .update(brandTable)
+      .set({ managerId: id })
+      .where(inArray(brandTable.id, sectionIds));
+  }
   return database
     .select()
     .from(users)
@@ -3133,6 +3147,7 @@ export async function updateManagerAdmin(
     phone?: string | null;
     role?: "admin" | "manager";
     categoryIds?: number[];
+    sectionIds?: number[];
   }
 ) {
   const database = await getDb();
@@ -3159,6 +3174,21 @@ export async function updateManagerAdmin(
     await database.update(users).set(updateData).where(eq(users.id, id));
   if (data.categoryIds !== undefined)
     await replaceManagerCategoryAssignments(id, data.categoryIds);
+  if (data.sectionIds !== undefined) {
+    const sectionIds = Array.from(
+      new Set(data.sectionIds.filter(sectionId => Number.isInteger(sectionId) && sectionId > 0))
+    );
+    await database
+      .update(brandTable)
+      .set({ managerId: null })
+      .where(eq(brandTable.managerId, id));
+    if (sectionIds.length > 0) {
+      await database
+        .update(brandTable)
+        .set({ managerId: id })
+        .where(inArray(brandTable.id, sectionIds));
+    }
+  }
   return database
     .select()
     .from(users)

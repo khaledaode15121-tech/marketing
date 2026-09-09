@@ -89,8 +89,8 @@ export default function ManagerManagement() {
         (categories.data ?? [])
           .filter(
             category =>
-              typeof category.sectionId === "number" &&
-              selected.has(category.sectionId)
+              category.sectionId != null &&
+              selected.has(Number(category.sectionId))
           )
           .map(category => category.id)
       )
@@ -117,6 +117,7 @@ export default function ManagerManagement() {
         phone: null,
         password: form.password || undefined,
         categoryIds,
+        sectionIds: form.sectionIds,
       });
       return;
     }
@@ -147,6 +148,7 @@ export default function ManagerManagement() {
       name: form.name,
       role: "manager",
       categoryIds,
+      sectionIds: form.sectionIds,
     });
   };
   const startEdit = (manager: any) => {

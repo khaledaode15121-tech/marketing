@@ -1001,6 +1001,7 @@ export const appRouter = router({
             phone: z.string().optional(),
             role: z.enum(["admin", "manager"]).default("manager"),
             categoryIds: z.array(z.number().int().positive()).default([]),
+            sectionIds: z.array(z.number().int().positive()).default([]),
           })
         )
         .mutation(({ input }) =>
@@ -1021,6 +1022,7 @@ export const appRouter = router({
             phone: z.string().nullable().optional(),
             role: z.enum(["admin", "manager"]).optional(),
             categoryIds: z.array(z.number().int().positive()).optional(),
+            sectionIds: z.array(z.number().int().positive()).optional(),
           })
         )
         .mutation(({ input }) => {
