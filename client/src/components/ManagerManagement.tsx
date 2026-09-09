@@ -138,6 +138,7 @@ export default function ManagerManagement() {
         password: generatedPassword,
         role: "manager",
         categoryIds,
+        sectionIds: form.sectionIds,
       });
       return;
     }
@@ -152,13 +153,11 @@ export default function ManagerManagement() {
     });
   };
   const startEdit = (manager: any) => {
-    const managerCategoryIds = manager.categoryIds ?? [];
-    const sectionIds = Array.from(
+    const sectionIds: number[] = Array.from(
       new Set(
-        (categories.data ?? [])
-          .filter(category => managerCategoryIds.includes(category.id))
-          .map(category => category.sectionId)
-          .filter((id): id is number => typeof id === "number")
+        (manager.sectionIds ?? []).map((id: unknown) => Number(id)).filter(
+          (id: number) => Number.isInteger(id) && id > 0
+        )
       )
     );
 
@@ -329,24 +328,14 @@ export default function ManagerManagement() {
                   @{manager.username}
                 </span>
                 <p className="text-sm text-muted-foreground">
-                  الأقسام:{" "}
-                  {Array.from(
-                    new Set(
-                      (categories.data ?? [])
-                        .filter(category =>
-                          (manager.categoryIds ?? []).includes(category.id)
-                        )
-                        .map(category => category.sectionId)
-                        .filter((id): id is number => typeof id === "number")
-                        .map(
-                          sectionId =>
-                            sections.data?.find(
-                              section => section.id === sectionId
-                            )?.name
-                        )
-                        .filter((name): name is string => Boolean(name))
+                  الأقسام: {" "}
+                  {(manager.sectionIds ?? [])
+                    .map((sectionId: number) =>
+                      sections.data?.find(section => section.id === sectionId)
                     )
-                  ).join("، ") || "غير محدد"}
+                    .filter(Boolean)
+                    .map(section => section!.name)
+                    .join("، ") || "غير محدد"}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   كلمة المرور:{" "}

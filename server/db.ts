@@ -711,6 +711,7 @@ export async function updateUserAdmin(
     password?: string;
     role?: "user" | "admin" | "manager";
     categoryIds?: number[];
+    sectionIds?: number[];
   }
 ) {
   const db = await getDb();
@@ -772,6 +773,29 @@ export async function updateUserAdmin(
     Array.isArray(data.categoryIds)
   ) {
     await replaceManagerCategoryAssignments(id, data.categoryIds);
+  }
+
+  if (
+    (data.role === "manager" || data.role === "admin") &&
+    Array.isArray(data.sectionIds)
+  ) {
+    await db
+      .update(brandTable)
+      .set({ managerId: null })
+      .where(eq(brandTable.managerId, id));
+    const sectionIds = Array.from(
+      new Set(
+        data.sectionIds.filter(
+          sectionId => Number.isInteger(sectionId) && sectionId > 0
+        )
+      )
+    );
+    if (sectionIds.length > 0) {
+      await db
+        .update(brandTable)
+        .set({ managerId: id })
+        .where(inArray(brandTable.id, sectionIds));
+    }
   }
 
   return getUserById(id);
@@ -3061,6 +3085,16 @@ export async function replaceManagerCategoryAssignments(
   return uniqueCategoryIds;
 }
 
+export async function getManagerSectionIds(managerId: number) {
+  const database = await getDb();
+  if (!database) return [];
+  const rows = await database
+    .select({ id: brandTable.id })
+    .from(brandTable)
+    .where(eq(brandTable.managerId, managerId));
+  return rows.map(row => row.id);
+}
+
 export async function getManagersAdmin() {
   const database = await getDb();
   if (!database) return [];
@@ -3076,6 +3110,7 @@ export async function getManagersAdmin() {
       passwordEncrypted: undefined,
       password: decryptManagerPassword(manager.passwordEncrypted),
       categoryIds: await getManagerCategoryIds(manager.id),
+      sectionIds: await getManagerSectionIds(manager.id),
     }))
   );
 }

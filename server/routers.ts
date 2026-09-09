@@ -968,6 +968,7 @@ export const appRouter = router({
             password: z.string().min(5).optional(),
             role: z.enum(["user", "admin", "manager"]).optional(),
             categoryIds: z.array(z.number().int().positive()).optional(),
+            sectionIds: z.array(z.number().int().positive()).optional(),
           })
         )
         .mutation(async ({ input }) => {
