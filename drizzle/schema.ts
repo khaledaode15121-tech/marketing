@@ -230,6 +230,7 @@ export const orders = mysqlTable("orders", {
     "processing",
     "shipped",
     "delivered",
+    "contact_failed",
     "cancelled",
   ]).default("pending"),
   paymentStatus: mysqlEnum("paymentStatus", ["unpaid", "paid", "refunded"])

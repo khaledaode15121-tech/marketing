@@ -1067,33 +1067,6 @@ export async function createOrderFromCart(
       const insertedId = extractInsertId(insertedOrder);
       createdOrderId = typeof insertedId === "number" ? insertedId : null;
       if (createdOrderId) {
-        for (const item of orderItems) {
-          const product = productMap.get(item.productId)!;
-          const unitCost = Number(product.purchasePrice || 0);
-          await tx.insert(sales).values({
-            orderId: createdOrderId,
-            managerId: null,
-            categoryId: product.categoryId ?? null,
-            productId: item.productId,
-            productName: item.title,
-            quantity: item.quantity,
-            unitPrice: item.price.toFixed(2),
-            unitCost: unitCost.toFixed(2),
-            totalAmount: (item.price * item.quantity).toFixed(2),
-            profitAmount: ((item.price - unitCost) * item.quantity).toFixed(2),
-            status: "confirmed",
-            saleDate: new Date(),
-          });
-        }
-        await tx.insert(cashTransactions).values({
-          managerId: null,
-          type: "income",
-          amount: totalPriceFormatted,
-          description: `مبيعات الطلب #${createdOrderId}`,
-          sourceType: "order",
-          sourceId: createdOrderId,
-          transactionDate: new Date(),
-        });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -1151,7 +1124,8 @@ export type OrderStatus = (typeof orders.$inferSelect)["status"];
 export async function getAllOrdersAdmin() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders).orderBy(desc(orders.createdAt));
+  const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
+  return rows.filter(order => order.status !== "delivered");
 }
 
 export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
@@ -1195,19 +1169,76 @@ export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
       .map(product => product.id)
   );
 
-  return allOrders.filter(order => {
-    if (!Array.isArray(order.items)) return false;
-    return order.items.some(item => {
-      const productId = Number(item?.productId);
-      return Number.isFinite(productId) && allowedProductIds.has(productId);
+  return allOrders.filter(order => order.status !== "delivered" && order.items && Array.isArray(order.items) && order.items.some(item => {
+    const productId = Number(item?.productId);
+    return Number.isFinite(productId) && allowedProductIds.has(productId);
+  }));
+}
+
+async function finalizeOrderFinancials(order: Order, managerId?: number | null) {
+  const db = await getDb();
+  if (!db || !order.items || !Array.isArray(order.items)) return;
+
+  const existingSales = await db
+    .select({ id: sales.id })
+    .from(sales)
+    .where(eq(sales.orderId, order.id))
+    .limit(1);
+  if (existingSales.length === 0) {
+    const productIds = order.items.map(item => item.productId);
+    const productRows = await db
+      .select()
+      .from(products)
+      .where(inArray(products.id, productIds));
+    const productMap = new Map(productRows.map(product => [product.id, product]));
+    for (const item of order.items) {
+      const product = productMap.get(item.productId);
+      const unitCost = Number(product?.purchasePrice ?? 0);
+      await db.insert(sales).values({
+        orderId: order.id,
+        managerId: managerId ?? null,
+        categoryId: product?.categoryId ?? null,
+        productId: item.productId,
+        productName: item.title || product?.name || `المنتج ${item.productId}`,
+        quantity: item.quantity,
+        unitPrice: Number(item.price).toFixed(2),
+        unitCost: unitCost.toFixed(2),
+        totalAmount: (Number(item.price) * item.quantity).toFixed(2),
+        profitAmount: ((Number(item.price) - unitCost) * item.quantity).toFixed(2),
+        status: "confirmed",
+        saleDate: new Date(),
+      });
+    }
+  }
+
+  const existingCash = await db
+    .select({ id: cashTransactions.id })
+    .from(cashTransactions)
+    .where(
+      and(
+        eq(cashTransactions.sourceType, "order"),
+        eq(cashTransactions.sourceId, order.id)
+      )
+    )
+    .limit(1);
+  if (existingCash.length === 0) {
+    await db.insert(cashTransactions).values({
+      managerId: managerId ?? null,
+      type: "income",
+      amount: Number(order.totalPrice).toFixed(2),
+      description: `مبيعات الطلب #${order.id} بعد التسليم والدفع`,
+      sourceType: "order",
+      sourceId: order.id,
+      transactionDate: new Date(),
     });
-  });
+  }
 }
 
 export async function updateOrderStatusAdmin(
   orderId: number,
   status: OrderStatus,
-  estimatedDeliveryMinutes?: number | null
+  estimatedDeliveryMinutes?: number | null,
+  managerId?: number | null
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1226,6 +1257,7 @@ export async function updateOrderStatusAdmin(
     updateData.estimatedDeliveryMinutes = estimatedDeliveryMinutes;
   }
   await db.update(orders).set(updateData).where(eq(orders.id, orderId));
+  if (status === "delivered") await finalizeOrderFinancials(existing[0], managerId);
   if (status === "cancelled") await setSalesStatusByOrder(orderId, "cancelled");
   const updated = await db
     .select()
@@ -1319,6 +1351,14 @@ export async function updateOrderStatus(
     .update(orders)
     .set({ status })
     .where(and(eq(orders.id, orderId), eq(orders.userId, userId)));
+  if (status === "delivered") {
+    const deliveredOrder = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
+      .limit(1);
+    if (deliveredOrder[0]) await finalizeOrderFinancials(deliveredOrder[0]);
+  }
   if (status === "cancelled") await setSalesStatusByOrder(orderId, "cancelled");
 
   const updated = await db

@@ -394,6 +394,7 @@ export const appRouter = router({
             "processing",
             "shipped",
             "delivered",
+            "contact_failed",
             "cancelled",
           ]),
         })
@@ -544,6 +545,7 @@ export const appRouter = router({
               "processing",
               "shipped",
               "delivered",
+              "contact_failed",
               "cancelled",
             ]),
             estimatedDeliveryMinutes: z
@@ -565,7 +567,8 @@ export const appRouter = router({
           return db.updateOrderStatusAdmin(
             input.orderId,
             input.status,
-            input.estimatedDeliveryMinutes
+            input.estimatedDeliveryMinutes,
+            ctx.user.role === "admin" ? null : ctx.user.id
           );
         }),
     }),

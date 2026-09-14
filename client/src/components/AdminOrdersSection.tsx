@@ -7,11 +7,12 @@ import { toast } from "sonner";
 import { formatSypWithCurrency } from "@/lib/formatters";
 
 const STATUS_OPTIONS = [
-  { value: "pending", label: "قيد الانتظار" },
-  { value: "processing", label: "قيد التجهيز" },
-  { value: "shipped", label: "قيد الشحن" },
-  { value: "delivered", label: "تم التسليم" },
-  { value: "cancelled", label: "ملغى" },
+  { value: "pending", label: "تم طلب الزبون" },
+  { value: "processing", label: "قيد المراجعة" },
+  { value: "shipped", label: "تم إرسال الطلبية" },
+  { value: "delivered", label: "تم تسليم الطلبية والدفع" },
+  { value: "contact_failed", label: "لم يتم التسليم بسبب مشكلة في التواصل" },
+  { value: "cancelled", label: "تم إلغاء الطلبية" },
 ] as const;
 
 const statusLabels = Object.fromEntries(
@@ -125,6 +126,7 @@ export default function AdminOrdersSection() {
                           | "processing"
                           | "shipped"
                           | "delivered"
+                          | "contact_failed"
                           | "cancelled",
                         estimatedDeliveryMinutes:
                           draft.minutes.trim() === ""

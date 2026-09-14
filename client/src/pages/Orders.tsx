@@ -16,11 +16,12 @@ import { getLoginUrl } from "@/const";
 import { formatSypWithCurrency } from "@/lib/formatters";
 
 const orderStatusLabel: Record<string, string> = {
-  pending: "بانتظار المراجعة",
-  processing: "قيد التجهيز في المستودع",
-  shipped: "خرج من المستودع",
-  delivered: "تم التسليم",
-  cancelled: "ملغى",
+  pending: "تم طلب الزبون",
+  processing: "قيد المراجعة",
+  shipped: "تم إرسال الطلبية",
+  delivered: "تم تسليم الطلبية والدفع",
+  contact_failed: "لم يتم التسليم بسبب مشكلة في التواصل",
+  cancelled: "تم إلغاء الطلبية",
 };
 
 const rentalStatusLabel: Record<string, string> = {
