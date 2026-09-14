@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatSypWithCurrency } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ export default function EconomicDashboard() {
   const summaryQuery = trpc.dashboard.finance.summary.useQuery({ period });
   const expensesQuery = trpc.dashboard.finance.expenses.list.useQuery();
   const salesQuery = trpc.dashboard.finance.sales.list.useQuery();
+  const categoriesQuery = trpc.products.categoriesWithImages.useQuery();
   const purchasesQuery = trpc.dashboard.finance.purchases.list.useQuery();
   const cashQuery = trpc.dashboard.finance.cash.list.useQuery();
   const utils = trpc.useContext();
@@ -75,6 +76,43 @@ export default function EconomicDashboard() {
     onError: error => toast.error(error.message),
   });
   const summary = summaryQuery.data;
+  const salesByDepartment = useMemo(() => {
+    const categoryNames = new Map(
+      (categoriesQuery.data ?? []).map(category => [category.id, category.name])
+    );
+    const groups = new Map<
+      string,
+      {
+        name: string;
+        quantity: number;
+        revenue: number;
+        cost: number;
+        profit: number;
+      }
+    >();
+
+    for (const sale of salesQuery.data ?? []) {
+      if (sale.status !== "confirmed") continue;
+      const key = sale.categoryId == null ? "uncategorized" : String(sale.categoryId);
+      const current = groups.get(key) ?? {
+        name:
+          sale.categoryId == null
+            ? "غير مصنف"
+            : categoryNames.get(sale.categoryId) ?? `قسم #${sale.categoryId}`,
+        quantity: 0,
+        revenue: 0,
+        cost: 0,
+        profit: 0,
+      };
+      current.quantity += Number(sale.quantity);
+      current.revenue += Number(sale.totalAmount);
+      current.cost += Number(sale.unitCost) * Number(sale.quantity);
+      current.profit += Number(sale.profitAmount);
+      groups.set(key, current);
+    }
+
+    return Array.from(groups.values()).sort((a, b) => b.revenue - a.revenue);
+  }, [categoriesQuery.data, salesQuery.data]);
 
   const addExpense = (event: React.FormEvent) => {
     event.preventDefault();
@@ -163,6 +201,7 @@ export default function EconomicDashboard() {
           <TabsTrigger value="cash">الصندوق النقدي</TabsTrigger>
         </TabsList>
         <TabsContent value="sales">
+          <SalesByDepartmentReport rows={salesByDepartment} />
           <LedgerTable
             title="سجل المبيعات"
             rows={salesQuery.data ?? []}
@@ -354,6 +393,95 @@ export default function EconomicDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function SalesByDepartmentReport({
+  rows,
+}: {
+  rows: Array<{
+    name: string;
+    quantity: number;
+    revenue: number;
+    cost: number;
+    profit: number;
+  }>;
+}) {
+  const totals = rows.reduce(
+    (result, row) => ({
+      quantity: result.quantity + row.quantity,
+      revenue: result.revenue + row.revenue,
+      cost: result.cost + row.cost,
+      profit: result.profit + row.profit,
+    }),
+    { quantity: 0, revenue: 0, cost: 0, profit: 0 }
+  );
+
+  return (
+    <Card className="mb-4 border-emerald-100 shadow-sm">
+      <CardHeader>
+        <CardTitle>التقرير التفصيلي للمبيعات حسب الأقسام</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          يعرض المبيعات المؤكدة فقط، مرتبة من القسم الأعلى إيرادًا إلى الأقل.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            لا توجد مبيعات مؤكدة لتجميعها حسب الأقسام.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead>
+                <tr className="border-b text-right text-muted-foreground">
+                  <th className="p-3 font-semibold">القسم</th>
+                  <th className="p-3 font-semibold">الكمية</th>
+                  <th className="p-3 font-semibold">إجمالي المبيعات</th>
+                  <th className="p-3 font-semibold">التكلفة</th>
+                  <th className="p-3 font-semibold">الربح</th>
+                  <th className="p-3 font-semibold">هامش الربح</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(row => (
+                  <tr key={row.name} className="border-b last:border-0">
+                    <td className="p-3 font-semibold">{row.name}</td>
+                    <td className="p-3">{row.quantity}</td>
+                    <td className="p-3">{formatSypWithCurrency(row.revenue)}</td>
+                    <td className="p-3">{formatSypWithCurrency(row.cost)}</td>
+                    <td className="p-3 font-semibold text-emerald-700">
+                      {formatSypWithCurrency(row.profit)}
+                    </td>
+                    <td className="p-3">
+                      {row.revenue > 0
+                        ? `${((row.profit / row.revenue) * 100).toFixed(1)}%`
+                        : "0.0%"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 bg-muted/50 font-bold">
+                  <td className="p-3">الإجمالي</td>
+                  <td className="p-3">{totals.quantity}</td>
+                  <td className="p-3">{formatSypWithCurrency(totals.revenue)}</td>
+                  <td className="p-3">{formatSypWithCurrency(totals.cost)}</td>
+                  <td className="p-3 text-emerald-700">
+                    {formatSypWithCurrency(totals.profit)}
+                  </td>
+                  <td className="p-3">
+                    {totals.revenue > 0
+                      ? `${((totals.profit / totals.revenue) * 100).toFixed(1)}%`
+                      : "0.0%"}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
