@@ -1128,6 +1128,40 @@ export async function getAllOrdersAdmin() {
   return rows.filter(order => order.status !== "delivered");
 }
 
+export function filterOrdersForManager(
+  allOrders: Order[],
+  relatedProducts: Array<{ id: number; categoryId: number | null; category: string | null }>,
+  allowedCategoryIds: number[],
+  allowedCategoryNames: string[] = []
+) {
+  const allowedIds = new Set(allowedCategoryIds.map(Number));
+  const allowedNames = new Set(
+    allowedCategoryNames.map(name => name.trim().toLocaleLowerCase())
+  );
+  const allowedProductIds = new Set(
+    relatedProducts
+      .filter(product => {
+        const categoryIdMatches =
+          product.categoryId != null && allowedIds.has(Number(product.categoryId));
+        const categoryNameMatches =
+          product.category != null &&
+          allowedNames.has(product.category.trim().toLocaleLowerCase());
+        return categoryIdMatches || categoryNameMatches;
+      })
+      .map(product => product.id)
+  );
+
+  return allOrders.filter(
+    order =>
+      order.status !== "delivered" &&
+      Array.isArray(order.items) &&
+      order.items.some(item => {
+        const productId = Number(item?.productId);
+        return Number.isFinite(productId) && allowedProductIds.has(productId);
+      })
+  );
+}
+
 export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
   const db = await getDb();
   if (!db) return [];
@@ -1155,24 +1189,20 @@ export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
   if (productIds.length === 0) return [];
 
   const relatedProducts = await db
-    .select({ id: products.id, categoryId: products.categoryId })
+    .select({ id: products.id, categoryId: products.categoryId, category: products.category })
     .from(products)
     .where(inArray(products.id, productIds));
+  const allowedCategories = await db
+    .select({ name: categoryTable.name })
+    .from(categoryTable)
+    .where(inArray(categoryTable.id, allowedCategoryIds));
 
-  const allowedProductIds = new Set(
-    relatedProducts
-      .filter(
-        product =>
-          product.categoryId != null &&
-          allowedCategoryIds.includes(Number(product.categoryId))
-      )
-      .map(product => product.id)
+  return filterOrdersForManager(
+    allOrders,
+    relatedProducts,
+    allowedCategoryIds,
+    allowedCategories.map(category => category.name)
   );
-
-  return allOrders.filter(order => order.status !== "delivered" && order.items && Array.isArray(order.items) && order.items.some(item => {
-    const productId = Number(item?.productId);
-    return Number.isFinite(productId) && allowedProductIds.has(productId);
-  }));
 }
 
 async function finalizeOrderFinancials(order: Order, managerId?: number | null) {

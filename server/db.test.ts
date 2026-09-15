@@ -5,6 +5,7 @@ import {
   extractInsertId,
   getBrandSectionsWithCategories,
   getDashboardStatsForUser,
+  filterOrdersForManager,
   resolveDatabaseUrl,
 } from "./db";
 
@@ -114,6 +115,38 @@ describe("brand section category mapping", () => {
       );
       await connection.end();
     }
+  });
+});
+
+describe("manager order scope", () => {
+  it("includes orders when the product category name matches an assigned category", () => {
+    const orders = [
+      { id: 1, status: "pending", items: [{ productId: 101, quantity: 1, price: 100 }] },
+      { id: 2, status: "pending", items: [{ productId: 202, quantity: 1, price: 200 }] },
+      { id: 3, status: "delivered", items: [{ productId: 101, quantity: 1, price: 100 }] },
+    ] as any;
+
+    const result = filterOrdersForManager(
+      orders,
+      [
+        { id: 101, categoryId: null, category: "هواتف ذكية" },
+        { id: 202, categoryId: 99, category: "سماعات" },
+      ],
+      [12],
+      ["هواتف ذكية"]
+    );
+
+    expect(result.map(order => order.id)).toEqual([1]);
+  });
+
+  it("keeps a directly assigned category working by id", () => {
+    const result = filterOrdersForManager(
+      [{ id: 7, status: "processing", items: [{ productId: 303 }] }] as any,
+      [{ id: 303, categoryId: 44, category: "قسم قديم" }],
+      [44]
+    );
+
+    expect(result.map(order => order.id)).toEqual([7]);
   });
 });
 
