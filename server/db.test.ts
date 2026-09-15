@@ -148,6 +148,30 @@ describe("manager order scope", () => {
 
     expect(result.map(order => order.id)).toEqual([7]);
   });
+
+  it("includes orders when MySQL returns the JSON items column as a string", () => {
+    const result = filterOrdersForManager(
+      [
+        {
+          id: 8,
+          status: "pending",
+          items: JSON.stringify([{ productId: "404", quantity: 1 }]),
+        },
+      ] as any,
+      [
+        {
+          id: 404,
+          categoryId: 12,
+          category: "هواتف",
+          brandId: null,
+          brand: null,
+        },
+      ],
+      [12]
+    );
+
+    expect(result.map(order => order.id)).toEqual([8]);
+  });
 });
 
 describe("dashboard stats scope", () => {

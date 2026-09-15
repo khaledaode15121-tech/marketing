@@ -1128,6 +1128,17 @@ export async function getAllOrdersAdmin() {
   return rows.filter(order => order.status !== "delivered");
 }
 
+function getOrderItems(order: Pick<Order, "items">): Array<Record<string, any>> {
+  if (Array.isArray(order.items)) return order.items as Array<Record<string, any>>;
+  if (typeof order.items !== "string") return [];
+  try {
+    const parsed = JSON.parse(order.items);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export function filterOrdersForManager(
   allOrders: Order[],
   relatedProducts: Array<{
@@ -1177,8 +1188,7 @@ export function filterOrdersForManager(
   return allOrders.filter(
     order =>
       order.status !== "delivered" &&
-      Array.isArray(order.items) &&
-      order.items.some(item => {
+      getOrderItems(order).some(item => {
         const productId = Number(item?.productId);
         return Number.isFinite(productId) && allowedProductIds.has(productId);
       })
@@ -1201,11 +1211,9 @@ export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
   const productIds = Array.from(
     new Set(
       allOrders.flatMap(order =>
-        Array.isArray(order.items)
-          ? order.items
-              .map(item => Number(item?.productId))
-              .filter(id => Number.isFinite(id))
-          : []
+        getOrderItems(order)
+          .map(item => Number(item?.productId))
+          .filter(id => Number.isFinite(id))
       )
     )
   );
