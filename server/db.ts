@@ -1255,34 +1255,35 @@ export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
 
 async function finalizeOrderFinancials(order: Order, managerId?: number | null) {
   const db = await getDb();
-  if (!db || !order.items || !Array.isArray(order.items)) return;
-
+  const items = getOrderItems(order);
+  if (!db || items.length === 0) return;
   const existingSales = await db
     .select({ id: sales.id })
     .from(sales)
     .where(eq(sales.orderId, order.id))
     .limit(1);
   if (existingSales.length === 0) {
-    const productIds = order.items.map(item => item.productId);
+    const productIds = items.map(item => Number(item.productId));
     const productRows = await db
       .select()
       .from(products)
       .where(inArray(products.id, productIds));
     const productMap = new Map(productRows.map(product => [product.id, product]));
-    for (const item of order.items) {
-      const product = productMap.get(item.productId);
+    for (const item of items) {
+      const productId = Number(item.productId);
+      const product = productMap.get(productId);
       const unitCost = Number(product?.purchasePrice ?? 0);
       await db.insert(sales).values({
         orderId: order.id,
         managerId: managerId ?? null,
         categoryId: product?.categoryId ?? null,
-        productId: item.productId,
-        productName: item.title || product?.name || `المنتج ${item.productId}`,
-        quantity: item.quantity,
+        productId,
+        productName: item.title || product?.name || `المنتج ${productId}`,
+        quantity: Number(item.quantity),
         unitPrice: Number(item.price).toFixed(2),
         unitCost: unitCost.toFixed(2),
-        totalAmount: (Number(item.price) * item.quantity).toFixed(2),
-        profitAmount: ((Number(item.price) - unitCost) * item.quantity).toFixed(2),
+        totalAmount: (Number(item.price) * Number(item.quantity)).toFixed(2),
+        profitAmount: ((Number(item.price) - unitCost) * Number(item.quantity)).toFixed(2),
         status: "confirmed",
         saleDate: new Date(),
       });

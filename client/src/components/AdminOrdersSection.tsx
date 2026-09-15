@@ -55,6 +55,7 @@ export default function AdminOrdersSection() {
   const { data: products = [] } = trpc.dashboard.products.list.useQuery();
   const { data: categories = [] } = trpc.dashboard.categories.list.useQuery();
   const { data: sections = [] } = trpc.dashboard.brands.list.useQuery();
+  const utils = trpc.useContext();
   const [drafts, setDrafts] = useState<
     Record<number, { status: string; minutes: string }>
   >({});
@@ -62,6 +63,8 @@ export default function AdminOrdersSection() {
     onSuccess: () => {
       toast.success("تم تحديث حالة الطلب ومدة الانتظار");
       refetch();
+      void utils.dashboard.finance.sales.list.invalidate();
+      void utils.dashboard.finance.summary.invalidate();
     },
     onError: error => toast.error(error.message || "تعذر تحديث الطلب"),
   });
