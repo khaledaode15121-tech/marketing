@@ -129,8 +129,8 @@ describe("manager order scope", () => {
     const result = filterOrdersForManager(
       orders,
       [
-        { id: 101, categoryId: null, category: "هواتف ذكية" },
-        { id: 202, categoryId: 99, category: "سماعات" },
+        { id: 101, categoryId: null, category: "هواتف ذكية", brandId: null, brand: "Apple" },
+        { id: 202, categoryId: 99, category: "سماعات", brandId: null, brand: "Sony" },
       ],
       [12],
       ["هواتف ذكية"]
@@ -142,7 +142,7 @@ describe("manager order scope", () => {
   it("keeps a directly assigned category working by id", () => {
     const result = filterOrdersForManager(
       [{ id: 7, status: "processing", items: [{ productId: 303 }] }] as any,
-      [{ id: 303, categoryId: 44, category: "قسم قديم" }],
+      [{ id: 303, categoryId: 44, category: "قسم قديم", brandId: null, brand: "Brand" }],
       [44]
     );
 

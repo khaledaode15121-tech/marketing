@@ -235,6 +235,7 @@ type AdminDashboardUser = NonNullable<ReturnType<typeof useAuth>["user"]>;
 function AdminDashboardContent({ user }: { user: AdminDashboardUser }) {
   const isManager = user?.role === "manager";
   const isAdmin = user?.role === "admin";
+  const canReviewOrders = isAdmin || isManager;
   const managerCategoryIds =
     (user as (typeof user & { categoryIds?: number[] }) | null)?.categoryIds ??
     [];
@@ -1339,7 +1340,9 @@ function AdminDashboardContent({ user }: { user: AdminDashboardUser }) {
         >
           <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-8">
             <TabsTrigger value="finance">الجدوى الاقتصادية</TabsTrigger>
-            <TabsTrigger value="orders">مراجعة الطلبات</TabsTrigger>
+            {canReviewOrders && (
+              <TabsTrigger value="orders">مراجعة الطلبات</TabsTrigger>
+            )}
             <TabsTrigger value="rentals">طلبات الإيجار</TabsTrigger>
             <TabsTrigger value="products">إدارة المنتجات</TabsTrigger>
             <TabsTrigger value="catalog">الفئات</TabsTrigger>
@@ -1364,9 +1367,11 @@ function AdminDashboardContent({ user }: { user: AdminDashboardUser }) {
               <ManagerManagement />
             </TabsContent>
           )}
-          <TabsContent value="orders">
-            <AdminOrdersSection />
-          </TabsContent>
+          {canReviewOrders && (
+            <TabsContent value="orders">
+              <AdminOrdersSection />
+            </TabsContent>
+          )}
           <TabsContent value="rentals">
             <AdminRentalSection />
           </TabsContent>

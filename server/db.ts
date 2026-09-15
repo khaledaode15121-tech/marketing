@@ -1130,23 +1130,46 @@ export async function getAllOrdersAdmin() {
 
 export function filterOrdersForManager(
   allOrders: Order[],
-  relatedProducts: Array<{ id: number; categoryId: number | null; category: string | null }>,
+  relatedProducts: Array<{
+    id: number;
+    categoryId: number | null;
+    category: string | null;
+    brandId: number | null;
+    brand: string | null;
+  }>,
   allowedCategoryIds: number[],
-  allowedCategoryNames: string[] = []
+  allowedCategoryNames: string[] = [],
+  allowedBrandIds: number[] = [],
+  allowedBrandNames: string[] = []
 ) {
-  const allowedIds = new Set(allowedCategoryIds.map(Number));
-  const allowedNames = new Set(
+  const allowedCategoryIdSet = new Set(allowedCategoryIds.map(Number));
+  const allowedCategoryNameSet = new Set(
     allowedCategoryNames.map(name => name.trim().toLocaleLowerCase())
+  );
+  const allowedBrandIdSet = new Set(allowedBrandIds.map(Number));
+  const allowedBrandNameSet = new Set(
+    allowedBrandNames.map(name => name.trim().toLocaleLowerCase())
   );
   const allowedProductIds = new Set(
     relatedProducts
       .filter(product => {
         const categoryIdMatches =
-          product.categoryId != null && allowedIds.has(Number(product.categoryId));
+          product.categoryId != null &&
+          allowedCategoryIdSet.has(Number(product.categoryId));
         const categoryNameMatches =
           product.category != null &&
-          allowedNames.has(product.category.trim().toLocaleLowerCase());
-        return categoryIdMatches || categoryNameMatches;
+          allowedCategoryNameSet.has(product.category.trim().toLocaleLowerCase());
+        const brandIdMatches =
+          product.brandId != null && allowedBrandIdSet.has(Number(product.brandId));
+        const brandNameMatches =
+          product.brand != null &&
+          allowedBrandNameSet.has(product.brand.trim().toLocaleLowerCase());
+        return (
+          categoryIdMatches ||
+          categoryNameMatches ||
+          brandIdMatches ||
+          brandNameMatches
+        );
       })
       .map(product => product.id)
   );
@@ -1168,7 +1191,8 @@ export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
   if (isAdmin) return getAllOrdersAdmin();
 
   const allowedCategoryIds = await getManagerCategoryIds(managerId);
-  if (allowedCategoryIds.length === 0) return [];
+  const allowedBrandIds = await getManagerSectionIds(managerId);
+  if (allowedCategoryIds.length === 0 && allowedBrandIds.length === 0) return [];
 
   const allOrders = await db
     .select()
@@ -1189,19 +1213,35 @@ export async function getOrdersForManager(managerId: number, isAdmin: boolean) {
   if (productIds.length === 0) return [];
 
   const relatedProducts = await db
-    .select({ id: products.id, categoryId: products.categoryId, category: products.category })
+    .select({
+      id: products.id,
+      categoryId: products.categoryId,
+      category: products.category,
+      brandId: products.brandId,
+      brand: products.brand,
+    })
     .from(products)
     .where(inArray(products.id, productIds));
-  const allowedCategories = await db
-    .select({ name: categoryTable.name })
-    .from(categoryTable)
-    .where(inArray(categoryTable.id, allowedCategoryIds));
+  const allowedCategories = allowedCategoryIds.length
+    ? await db
+        .select({ name: categoryTable.name })
+        .from(categoryTable)
+        .where(inArray(categoryTable.id, allowedCategoryIds))
+    : [];
+  const allowedBrands = allowedBrandIds.length
+    ? await db
+        .select({ name: brandTable.name })
+        .from(brandTable)
+        .where(inArray(brandTable.id, allowedBrandIds))
+    : [];
 
   return filterOrdersForManager(
     allOrders,
     relatedProducts,
     allowedCategoryIds,
-    allowedCategories.map(category => category.name)
+    allowedCategories.map(category => category.name),
+    allowedBrandIds,
+    allowedBrands.map(brand => brand.name)
   );
 }
 
