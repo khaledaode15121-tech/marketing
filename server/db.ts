@@ -1476,13 +1476,16 @@ export async function updateOrderItems(
   }
 
   const order = existing[0];
-  if (
-    order.status === "shipped" ||
-    order.status === "delivered" ||
-    order.status === "cancelled"
-  ) {
-    throw new Error("لا يمكن تعديل الطلب بعد خروجه من المستودع أو إلغائه");
+  const editableStatuses = new Set([
+    "pending",
+    "processing",
+    "cancelled",
+    "contact_failed",
+  ]);
+  if (!editableStatuses.has(order.status || "")) {
+    throw new Error("لا يمكن تعديل الطلب في حالته الحالية");
   }
+  if (items.length === 0) throw new Error("يجب أن يحتوي الطلب على منتج واحد على الأقل");
 
   const totalPrice = items
     .reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -1518,6 +1521,41 @@ export async function updateOrderItems(
     .limit(1);
 
   return updated.length > 0 ? updated[0] : null;
+}
+
+export async function deleteOrderByUser(userId: number, orderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db
+    .select({ id: orders.id, status: orders.status })
+    .from(orders)
+    .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
+    .limit(1);
+  if (existing.length === 0) throw new Error("الطلب غير موجود");
+  const deletableStatuses = new Set([
+    "pending",
+    "processing",
+    "cancelled",
+    "contact_failed",
+  ]);
+  if (!deletableStatuses.has(existing[0].status || "")) {
+    throw new Error("لا يمكن حذف الطلب في حالته الحالية");
+  }
+  await db.transaction(async tx => {
+    await tx.delete(sales).where(eq(sales.orderId, orderId));
+    await tx
+      .delete(cashTransactions)
+      .where(
+        and(
+          eq(cashTransactions.sourceType, "order"),
+          eq(cashTransactions.sourceId, orderId)
+        )
+      );
+    await tx
+      .delete(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.userId, userId)));
+  });
+  return { success: true, orderId };
 }
 
 // ─── Wishlist Functions ───────────────────────────────────────────────────────

@@ -38,6 +38,13 @@ const paymentStatusLabel: Record<string, string> = {
   refunded: "تم رد المبلغ",
 };
 
+const customerEditableOrderStatuses = new Set([
+  "pending",
+  "processing",
+  "cancelled",
+  "contact_failed",
+]);
+
 export default function Orders() {
   const { user, loading } = useAuth();
   const [, navigate] = useLocation();
@@ -73,6 +80,15 @@ export default function Orders() {
     onError: error => {
       toast.error(error.message || "فشل حفظ التعديلات");
     },
+  });
+
+  const deleteOrderMutation = trpc.cart.delete.useMutation({
+    onSuccess: () => {
+      toast.success("تم حذف الطلب نهائيًا");
+      setEditingOrders([]);
+      refetch();
+    },
+    onError: error => toast.error(error.message || "فشل حذف الطلب"),
   });
 
   type OrderItem = {
@@ -265,11 +281,11 @@ export default function Orders() {
                               order.status ||
                               "pending"}
                       </button>
-                      {(order.status === "pending" ||
-                        order.status === "processing") && (
-                        <button
-                          type="button"
-                          onClick={() => {
+                      {customerEditableOrderStatuses.has(order.status || "") && (
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
                             if (!editedOrderItems[order.id]) {
                               const normalizedItems = Array.isArray(order.items)
                                 ? order.items
@@ -316,11 +332,28 @@ export default function Orders() {
                             if (!expandedOrders.includes(order.id)) {
                               setExpandedOrders(prev => [...prev, order.id]);
                             }
-                          }}
-                          className="rounded-full px-4 py-2 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700"
-                        >
-                          تعديل المنتج أو حذف
-                        </button>
+                            }}
+                            className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                          >
+                            تعديل الطلب
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  "هل أنت متأكد من حذف الطلب نهائيًا؟ لا يمكن التراجع عن هذا الإجراء."
+                                )
+                              ) {
+                                deleteOrderMutation.mutate({ orderId: order.id });
+                              }
+                            }}
+                            disabled={deleteOrderMutation.isPending}
+                            className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            حذف الطلب نهائيًا
+                          </button>
+                        </div>
                       )}
                       <div className="text-sm text-gray-700">
                         حالة الطلب:{" "}
@@ -460,8 +493,7 @@ export default function Orders() {
                                 </div>
                               </div>
                               <div className="flex flex-col items-end gap-3 sm:items-center sm:flex-row">
-                                {(order.status === "pending" ||
-                                  order.status === "processing") && (
+                                {customerEditableOrderStatuses.has(order.status || "") && (
                                   <button
                                     type="button"
                                     onClick={() => {

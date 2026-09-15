@@ -430,6 +430,12 @@ export const appRouter = router({
           input.shippingAddress ?? null
         );
       }),
+    delete: publicProcedure
+      .input(z.object({ orderId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => {
+        if (!ctx.user) throw new Error("Authentication required");
+        return db.deleteOrderByUser(ctx.user.id, input.orderId);
+      }),
   }),
 
   rentals: router({
