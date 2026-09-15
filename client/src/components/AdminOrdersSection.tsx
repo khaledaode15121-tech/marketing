@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,12 +26,35 @@ type OrderItem = {
   title?: string | null;
 };
 
+type CatalogProduct = {
+  id: number;
+  name?: string | null;
+  categoryId?: number | null;
+  brandId?: number | null;
+  category?: string | null;
+  brand?: string | null;
+};
+
+type CatalogCategory = {
+  id: number;
+  name?: string | null;
+  sectionId?: number | null;
+};
+
+type CatalogSection = {
+  id: number;
+  name?: string | null;
+};
+
 export default function AdminOrdersSection() {
   const {
     data: orders = [],
     isLoading,
     refetch,
   } = trpc.dashboard.orders.list.useQuery();
+  const { data: products = [] } = trpc.dashboard.products.list.useQuery();
+  const { data: categories = [] } = trpc.dashboard.categories.list.useQuery();
+  const { data: sections = [] } = trpc.dashboard.brands.list.useQuery();
   const [drafts, setDrafts] = useState<
     Record<number, { status: string; minutes: string }>
   >({});
@@ -42,6 +65,30 @@ export default function AdminOrdersSection() {
     },
     onError: error => toast.error(error.message || "تعذر تحديث الطلب"),
   });
+
+  const productById = useMemo(
+    () => new Map((products as CatalogProduct[]).map(product => [product.id, product])),
+    [products]
+  );
+  const categoryById = useMemo(
+    () => new Map((categories as CatalogCategory[]).map(category => [category.id, category])),
+    [categories]
+  );
+  const sectionById = useMemo(
+    () => new Map((sections as CatalogSection[]).map(section => [section.id, section])),
+    [sections]
+  );
+
+  const getOrderItems = (value: unknown): OrderItem[] => {
+    if (Array.isArray(value)) return value as OrderItem[];
+    if (typeof value !== "string") return [];
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? (parsed as OrderItem[]) : [];
+    } catch {
+      return [];
+    }
+  };
 
   const getDraft = (order: (typeof orders)[number]) =>
     drafts[order.id] ?? {
@@ -69,9 +116,7 @@ export default function AdminOrdersSection() {
     <div className="space-y-4">
       {orders.map(order => {
         const draft = getDraft(order);
-        const items: OrderItem[] = Array.isArray(order.items)
-          ? order.items
-          : [];
+        const items = getOrderItems(order.items);
         return (
           <Card key={order.id} className="border-gray-200 shadow-sm">
             <CardHeader className="pb-3">
@@ -167,15 +212,46 @@ export default function AdminOrdersSection() {
                   <strong>{order.shippingAddress || "غير محدد"}</strong>
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {items.map(item => (
-                  <span
-                    key={`${order.id}-${item.productId}`}
-                    className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700"
-                  >
-                    {item.title || `منتج #${item.productId}`} × {item.quantity}
-                  </span>
-                ))}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-gray-800">تفاصيل المنتجات</p>
+                {items.length === 0 ? (
+                  <p className="text-xs text-gray-500">لا توجد تفاصيل للمنتجات.</p>
+                ) : (
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {items.map((item, index) => {
+                      const product = productById.get(Number(item.productId));
+                      const category = product?.categoryId
+                        ? categoryById.get(Number(product.categoryId))
+                        : undefined;
+                      const section = category?.sectionId
+                        ? sectionById.get(Number(category.sectionId))
+                        : product?.brandId
+                          ? sectionById.get(Number(product.brandId))
+                          : undefined;
+                      return (
+                        <div
+                          key={`${order.id}-${item.productId}-${index}`}
+                          className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700"
+                        >
+                          <div className="grid gap-1 sm:grid-cols-2">
+                            <span>
+                              القسم: <strong>{section?.name || product?.brand || "غير محدد"}</strong>
+                            </span>
+                            <span>
+                              الفئة: <strong>{category?.name || product?.category || "غير محددة"}</strong>
+                            </span>
+                            <span>
+                              المنتج: <strong>{product?.name || item.title || `منتج #${item.productId}`}</strong>
+                            </span>
+                            <span>
+                              العدد: <strong>{item.quantity}</strong>
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
