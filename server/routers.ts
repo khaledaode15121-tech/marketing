@@ -594,7 +594,7 @@ export const appRouter = router({
           .mutation(async ({ ctx, input }) => {
             const allowedRequests = await db.getRentalRequestsForManager(
               ctx.user.id,
-              false
+              ctx.user.role === "admin"
             );
             if (
               !allowedRequests.some(request => request.id === input.requestId)
@@ -630,7 +630,7 @@ export const appRouter = router({
           .mutation(async ({ ctx, input }) => {
             const allowedRequests = await db.getRentalRequestsForManager(
               ctx.user.id,
-              false
+              ctx.user.role === "admin"
             );
             if (!allowedRequests.some(request => request.id === input)) {
               throw new Error("لا تملك صلاحية إدارة هذا الطلب");

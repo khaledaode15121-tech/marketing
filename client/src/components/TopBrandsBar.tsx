@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import BrandBadge from "@/components/BrandBadge";
 import { ChevronDown } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function TopBrandsBar({ selectedCategory }: { selectedCategory?: string }) {
+  const [, navigate] = useLocation();
   const [activeBrand, setActiveBrand] = useState<string | null>(null);
   const brandMenuTimerRef = useRef<number | null>(null);
   const { data: sections = [] } = trpc.products.sections.useQuery();
@@ -64,10 +66,19 @@ export default function TopBrandsBar({ selectedCategory }: { selectedCategory?: 
   };
 
   const handleCategoryClick = (category?: string) => {
-    window.dispatchEvent(new CustomEvent("header:category", { detail: category }));
-    if (category) {
-      document.getElementById("products")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const applyCategory = () => {
+      window.dispatchEvent(new CustomEvent("header:category", { detail: category }));
+      document.getElementById("products")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    };
+    if (document.getElementById("products")) {
+      applyCategory();
+      return;
     }
+    navigate("/");
+    window.setTimeout(applyCategory, 100);
   };
 
   useEffect(() => {

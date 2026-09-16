@@ -62,6 +62,9 @@ export default function ShoppingCart() {
   const [isFinalized, setIsFinalized] = useState(false);
   const [savedOrder, setSavedOrder] = useState<SavedOrder | null>(null);
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const [rentalModeByProduct, setRentalModeByProduct] = useState<
+    Record<number, "sale" | "rental">
+  >({});
 
   useEffect(() => {
     setUserDetails({
@@ -426,26 +429,61 @@ export default function ShoppingCart() {
                         ? formatSypWithCurrency(item.productPrice)
                         : "-"}
                     </p>
-                    {item.isRentable && (
-                      <div className="mb-3 max-w-xs space-y-1">
-                        <Label htmlFor={`rental-date-${item.id}`}>
-                          تاريخ طلب الإيجار
-                        </Label>
-                        <Input
-                          id={`rental-date-${item.id}`}
-                          type="date"
-                          min={new Date().toISOString().slice(0, 10)}
-                          value={item.rentalDate || ""}
-                          disabled={isFinalized}
-                          onChange={event =>
-                            setRentalDateMutation.mutate({
-                              productId: item.productId,
-                              rentalDate: event.target.value || null,
-                            })
-                          }
-                        />
+                    {item.isRentable && item.isSellable && (
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        {(["sale", "rental"] as const).map(mode => {
+                          const selectedMode =
+                            rentalModeByProduct[item.productId] ??
+                            (item.rentalDate ? "rental" : "sale");
+                          return (
+                            <Button
+                              key={mode}
+                              type="button"
+                              variant={selectedMode === mode ? "default" : "outline"}
+                              className="rounded-lg"
+                              disabled={isFinalized}
+                              onClick={() => {
+                                setRentalModeByProduct(prev => ({
+                                  ...prev,
+                                  [item.productId]: mode,
+                                }));
+                                if (mode === "sale" && item.rentalDate) {
+                                  setRentalDateMutation.mutate({
+                                    productId: item.productId,
+                                    rentalDate: null,
+                                  });
+                                }
+                              }}
+                            >
+                              {mode === "sale" ? "شراء" : "إيجار"}
+                            </Button>
+                          );
+                        })}
                       </div>
                     )}
+                    {item.isRentable &&
+                      (!item.isSellable ||
+                        (rentalModeByProduct[item.productId] ??
+                          (item.rentalDate ? "rental" : "sale")) === "rental") && (
+                        <div className="mb-3 max-w-xs space-y-1">
+                          <Label htmlFor={`rental-date-${item.id}`}>
+                            تاريخ طلب الإيجار
+                          </Label>
+                          <Input
+                            id={`rental-date-${item.id}`}
+                            type="date"
+                            min={new Date().toISOString().slice(0, 10)}
+                            value={item.rentalDate || ""}
+                            disabled={isFinalized}
+                            onChange={event =>
+                              setRentalDateMutation.mutate({
+                                productId: item.productId,
+                                rentalDate: event.target.value || null,
+                              })
+                            }
+                          />
+                        </div>
+                      )}
 
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-2 w-fit">
@@ -568,6 +606,18 @@ export default function ShoppingCart() {
                 onClick={() => {
                   if (!paymentMethod) {
                     toast.error("يرجى اختيار طريقة الدفع");
+                    return;
+                  }
+                  const missingRentalDate = cartItems.some(
+                    item =>
+                      item.isRentable &&
+                      (!item.isSellable ||
+                        (rentalModeByProduct[item.productId] ??
+                          (item.rentalDate ? "rental" : "sale")) === "rental") &&
+                      !item.rentalDate
+                  );
+                  if (missingRentalDate) {
+                    toast.error("يرجى اختيار تاريخ الإيجار للمنتج المحدد");
                     return;
                   }
                   checkoutMutation.mutate({ paymentMethod });

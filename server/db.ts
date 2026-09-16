@@ -858,6 +858,7 @@ export async function getCartItems(userId: number) {
       productPrice: products.price,
       productStock: products.stock,
       isRentable: products.isRentable,
+      isSellable: products.isSellable,
       rentalPrice: products.rentalPrice,
     })
     .from(cartItems)
@@ -1009,12 +1010,20 @@ export async function createOrderFromCart(
     0
   );
   const totalPriceFormatted = totalPrice.toFixed(2);
-  const rentalItems = cart.filter(item => Boolean(item.isRentable));
-  for (const item of rentalItems) {
+  const rentalItems = cart.filter(
+    item => Boolean(item.isRentable) && Boolean(item.rentalDate)
+  );
+  const rentalOnlyItems = cart.filter(
+    item => Boolean(item.isRentable) && !item.isSellable
+  );
+  for (const item of rentalOnlyItems) {
     if (!item.rentalDate)
       throw new Error(
         `يرجى تحديد تاريخ الإيجار للمنتج ${item.productName || item.productId}`
       );
+  }
+  for (const item of rentalItems) {
+    if (!item.rentalDate) continue;
     const conflict = await db
       .select({ id: rentalBookings.id })
       .from(rentalBookings)
@@ -1125,7 +1134,9 @@ export async function getAllOrdersAdmin() {
   const db = await getDb();
   if (!db) return [];
   const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
-  return rows.filter(order => order.status !== "delivered");
+  return rows.filter(
+    order => order.status !== "delivered" && order.status !== "cancelled"
+  );
 }
 
 function getOrderItems(order: Pick<Order, "items">): Array<Record<string, any>> {
@@ -1137,6 +1148,46 @@ function getOrderItems(order: Pick<Order, "items">): Array<Record<string, any>> 
   } catch {
     return [];
   }
+}
+
+async function cancelOrderAndRestoreStock(order: Order) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const items = getOrderItems(order);
+  await db.transaction(async tx => {
+    const productIds = Array.from(
+      new Set(items.map(item => Number(item.productId)).filter(Number.isFinite))
+    );
+    const productRows = productIds.length
+      ? await tx
+          .select({ id: products.id, stock: products.stock })
+          .from(products)
+          .where(inArray(products.id, productIds))
+      : [];
+    const quantities = new Map<number, number>();
+    for (const item of items) {
+      const productId = Number(item.productId);
+      quantities.set(
+        productId,
+        (quantities.get(productId) ?? 0) + Math.max(0, Number(item.quantity) || 0)
+      );
+    }
+    for (const product of productRows) {
+      await tx
+        .update(products)
+        .set({ stock: (product.stock ?? 0) + (quantities.get(product.id) ?? 0) })
+        .where(eq(products.id, product.id));
+    }
+    await tx.delete(sales).where(eq(sales.orderId, order.id));
+    await tx
+      .delete(cashTransactions)
+      .where(
+        and(
+          eq(cashTransactions.sourceType, "order"),
+          eq(cashTransactions.sourceId, order.id)
+        )
+      );
+  });
 }
 
 export function filterOrdersForManager(
@@ -1188,6 +1239,7 @@ export function filterOrdersForManager(
   return allOrders.filter(
     order =>
       order.status !== "delivered" &&
+      order.status !== "cancelled" &&
       getOrderItems(order).some(item => {
         const productId = Number(item?.productId);
         return Number.isFinite(productId) && allowedProductIds.has(productId);
@@ -1327,6 +1379,9 @@ export async function updateOrderStatusAdmin(
     .where(eq(orders.id, orderId))
     .limit(1);
   if (existing.length === 0) throw new Error("الطلب غير موجود");
+  if (existing[0].status === "delivered" && status !== "delivered") {
+    throw new Error("لا يمكن تغيير حالة الطلب بعد التسليم");
+  }
 
   const updateData: {
     status: OrderStatus;
@@ -1337,7 +1392,9 @@ export async function updateOrderStatusAdmin(
   }
   await db.update(orders).set(updateData).where(eq(orders.id, orderId));
   if (status === "delivered") await finalizeOrderFinancials(existing[0], managerId);
-  if (status === "cancelled") await setSalesStatusByOrder(orderId, "cancelled");
+  if (status === "cancelled" && existing[0].status !== "cancelled") {
+    await cancelOrderAndRestoreStock(existing[0]);
+  }
   const updated = await db
     .select()
     .from(orders)
@@ -1425,6 +1482,14 @@ export async function updateOrderStatus(
   if (current[0].status === "delivered" && status !== "delivered") {
     throw new Error("لا يمكن تغيير حالة الطلب بعد التسليم");
   }
+  if (status === "cancelled" && current[0].status !== "cancelled") {
+    const orderRows = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
+      .limit(1);
+    if (orderRows[0]) await cancelOrderAndRestoreStock(orderRows[0]);
+  }
 
   await db
     .update(orders)
@@ -1438,7 +1503,6 @@ export async function updateOrderStatus(
       .limit(1);
     if (deliveredOrder[0]) await finalizeOrderFinancials(deliveredOrder[0]);
   }
-  if (status === "cancelled") await setSalesStatusByOrder(orderId, "cancelled");
 
   const updated = await db
     .select()
@@ -1759,6 +1823,7 @@ export async function approveRentalRequest(
       .select({
         isRentable: products.isRentable,
         name: products.name,
+        rentalPrice: products.rentalPrice,
         categoryId: products.categoryId,
         purchasePrice: products.purchasePrice,
       })
@@ -1789,7 +1854,30 @@ export async function approveRentalRequest(
       .from(rentalBookings)
       .where(eq(rentalBookings.rentalRequestId, request.id))
       .limit(1);
-    const booking = bookingRows[0];
+    let booking = bookingRows[0];
+    if (!booking) {
+      const rentalTotal = Number(productRows[0].rentalPrice || 0);
+      const insertedBooking = await tx.insert(rentalBookings).values({
+        productId: request.productId,
+        rentalDate: request.rentalDate,
+        status: "available",
+        quantity: 1,
+        rentalPrice: rentalTotal.toFixed(2),
+        payments: "0.00",
+        remaining: rentalTotal.toFixed(2),
+        rentalRequestId: request.id,
+        userId: request.userId,
+      });
+      const bookingId = extractInsertId(insertedBooking);
+      if (bookingId) {
+        const createdBooking = await tx
+          .select()
+          .from(rentalBookings)
+          .where(eq(rentalBookings.id, bookingId))
+          .limit(1);
+        booking = createdBooking[0];
+      }
+    }
     const rentalTotal = Number(booking?.rentalPrice || 0);
     const paid = Math.max(0, Number(payments) || 0);
     if (!booking) throw new Error("سجل الحجز غير موجود");

@@ -99,7 +99,7 @@ export default function AdminOrdersSection() {
       minutes:
         order.estimatedDeliveryMinutes == null
           ? ""
-          : String(order.estimatedDeliveryMinutes),
+          : String(Number(order.estimatedDeliveryMinutes) / 60),
     };
 
   if (isLoading)
@@ -152,9 +152,10 @@ export default function AdminOrdersSection() {
                       </option>
                     ))}
                   </select>
-                  <Input
-                    type="number"
-                    min={0}
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.5}
                     value={draft.minutes}
                     onChange={event =>
                       setDrafts(prev => ({
@@ -162,7 +163,7 @@ export default function AdminOrdersSection() {
                         [order.id]: { ...draft, minutes: event.target.value },
                       }))
                     }
-                    placeholder="مدة الانتظار بالدقائق"
+                    placeholder="مدة الانتظار بالساعات"
                     aria-label={`مدة انتظار الطلب ${order.id}`}
                   />
                   <Button
@@ -179,7 +180,7 @@ export default function AdminOrdersSection() {
                         estimatedDeliveryMinutes:
                           draft.minutes.trim() === ""
                             ? null
-                            : Number(draft.minutes),
+                            : Math.round(Number(draft.minutes) * 60),
                       })
                     }
                     disabled={updateMutation.isPending}
@@ -207,7 +208,7 @@ export default function AdminOrdersSection() {
                   <strong>
                     {order.estimatedDeliveryMinutes == null
                       ? "غير محدد"
-                      : `${order.estimatedDeliveryMinutes} دقيقة`}
+                      : `${Number(order.estimatedDeliveryMinutes) / 60} ساعة`}
                   </strong>
                 </span>
                 <span>
